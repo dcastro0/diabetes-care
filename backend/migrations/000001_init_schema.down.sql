@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS user_achievements;
+DROP TABLE IF EXISTS achievements;
+DROP TABLE IF EXISTS meals;
+DROP TABLE IF EXISTS glucose_logs;
+DROP TABLE IF EXISTS users;
