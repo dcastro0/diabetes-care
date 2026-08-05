@@ -1,0 +1,52 @@
+# Dependencies & Node
+node_modules/
+.pnpm-store/
+package-lock.json
+yarn.lock
+
+# Expo & React Native
+.expo/
+dist/
+web-build/
+*.orig.*
+*.patch
+*.apk
+*.aab
+*.ipa
+
+# Go & Binaries
+backend/bin/
+backend/dist/
+*.exe
+*.exe?
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# IDEs & System Files
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Database & Storage
+*.sqlite
+*.sqlite-journal
+*.db
+backend/tmp/
