@@ -27,6 +27,11 @@ help:
 	@echo "    test-backend   Executa os testes unitários do backend Go"
 	@echo "    lint-backend   Executa 'go vet' e verificações estáticas do Go"
 	@echo ""
+	@echo "  Banco de Dados (PostgreSQL):"
+	@echo "    db-up          Sobe o container do PostgreSQL via Docker Compose"
+	@echo "    db-down        Para e remove o container do PostgreSQL"
+	@echo "    db-logs        Exibe os logs em tempo real do container PostgreSQL"
+	@echo ""
 	@echo "  Frontend (Expo):"
 	@echo "    dev-frontend   Inicia o servidor de desenvolvimento do Expo"
 	@echo "    lint-frontend  Executa o linter do frontend Expo"
@@ -41,8 +46,23 @@ install:
 
 ## dev-backend: Executa o servidor Go localmente
 dev-backend:
-	@echo "🚀 Iniciando servidor Backend Go na porta 8080..."
-	@cd backend && go run ./cmd/server
+	@echo "🚀 Iniciando servidor Backend Go na porta 8080 (Pressione Ctrl+C para encerrar)..."
+	@-cd backend && go run ./cmd/server
+
+## db-up: Sobe o container PostgreSQL via Docker Compose
+db-up:
+	@echo "🐘 Subindo container do PostgreSQL..."
+	@docker compose up -d
+	@echo "✅ PostgreSQL rodando na porta 5432!"
+
+## db-down: Para e remove o container PostgreSQL
+db-down:
+	@echo "🛑 Parando container do PostgreSQL..."
+	@docker compose down
+
+## db-logs: Exibe os logs do container PostgreSQL
+db-logs:
+	@docker compose logs -f postgres
 
 ## dev-frontend: Executa o app Expo
 dev-frontend:
@@ -79,3 +99,4 @@ clean:
 	@rm -rf backend/bin
 	@rm -rf frontend/dist frontend/.expo
 	@echo "✅ Limpeza concluída!"
+
