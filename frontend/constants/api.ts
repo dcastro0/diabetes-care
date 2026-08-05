@@ -1,0 +1,1 @@
+export const API_URL = "https://dcastr0caio.pythonanywhere.com/api";
