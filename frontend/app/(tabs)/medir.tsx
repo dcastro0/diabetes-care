@@ -1,5 +1,6 @@
 import { ContextChip } from "@/components/ui/ContextChip";
 import { GlucoseBadge } from "@/components/ui/GlucoseBadge";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Achievement } from "@/services/achievementsServices";
 import { syncMeasurements } from "@/services/measurementService";
@@ -27,6 +28,8 @@ import tw from "twrnc";
 export default function MedirScreen() {
   const router = useRouter();
   const { authData } = useAuth();
+  const { isDark } = useTheme();
+
   const [valor, setValor] = useState("100");
   const [tagSelecionada, setTagSelecionada] = useState<string | null>("Em jejum");
   const [modalVisivel, setModalVisivel] = useState(false);
@@ -103,16 +106,16 @@ export default function MedirScreen() {
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       <ScrollView contentContainerStyle={tw`p-6 flex-grow justify-between`}>
         <View>
           {/* Cabeçalho */}
-          <View style={tw`mb-6 items-center`}>
-            <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
-              Novo Registro Clínico
+          <View style={tw`mb-6 items-center mt-2`}>
+            <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+              Novo Registro
             </Text>
-            <Text style={tw`text-2xl font-bold text-slate-800`}>
-              Nível de Glicemia
+            <Text style={[tw`text-2xl font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
+              Adicionar Medição
             </Text>
           </View>
 
@@ -171,7 +174,7 @@ export default function MedirScreen() {
 
           {/* Contexto da Medição */}
           <View style={tw`mb-6`}>
-            <Text style={tw`text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider`}>
+            <Text style={[tw`text-xs font-bold mb-3 uppercase tracking-wider`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
               Momento do Registro
             </Text>
             <View style={tw`flex-row flex-wrap gap-2`}>
@@ -206,7 +209,7 @@ export default function MedirScreen() {
               <>
                 <Feather name="check-circle" size={20} color="white" />
                 <Text style={tw`text-white text-center text-base font-bold`}>
-                  Salvar Leitura Clínica
+                  Salvar Leitura
                 </Text>
               </>
             )}
@@ -221,13 +224,13 @@ export default function MedirScreen() {
         visible={modalVisivel}
         onRequestClose={handleFecharModal}
       >
-        <View style={tw`flex-1 justify-center items-center bg-slate-900/60 p-6`}>
-          <View style={tw`bg-white w-full max-w-sm rounded-3xl p-6 items-center shadow-xl`}>
+        <View style={tw`flex-1 justify-center items-center bg-slate-900/70 p-6`}>
+          <View style={[tw`w-full max-w-sm rounded-3xl p-6 items-center shadow-xl border`, isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-100`]}>
             <View style={tw`bg-emerald-100 p-4 rounded-full mb-4`}>
               <Feather name="check" size={32} color={(tw.color("emerald-600") as string)} />
             </View>
-            <Text style={tw`text-xl font-bold text-slate-800 mb-1`}>Medição Salva</Text>
-            <Text style={tw`text-slate-500 text-sm text-center mb-6`}>
+            <Text style={[tw`text-xl font-bold mb-1`, isDark ? tw`text-white` : tw`text-slate-800`]}>Medição Salva</Text>
+            <Text style={[tw`text-sm text-center mb-6`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
               Registro clínico adicionado ao seu histórico com sucesso.
             </Text>
 

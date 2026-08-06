@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   addReminder,
   cancelAllReminders,
@@ -14,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
 
 export default function LembretesScreen() {
+  const { isDark } = useTheme();
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
@@ -54,11 +56,11 @@ export default function LembretesScreen() {
         return;
       }
 
-      const updatedList = await addReminder(hour, minute, "Hora de medir a glicemia");
+      const updatedList = await addReminder(hour, minute, "Hora de cuidar da sua saúde");
       setReminders(updatedList);
       Alert.alert(
         "Lembrete Adicionado!",
-        `Você será notificado diariamente às ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}.`,
+        `Você será notificado gentilmente às ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}.`,
       );
     } catch (error) {
       console.error("Erro ao adicionar lembrete:", error);
@@ -92,13 +94,18 @@ export default function LembretesScreen() {
   };
 
   const renderReminderItem = ({ item }: { item: Reminder }) => (
-    <View style={tw`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex-row justify-between items-center mb-3`}>
+    <View
+      style={[
+        tw`p-4 rounded-2xl border shadow-sm flex-row justify-between items-center mb-3`,
+        isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-100`,
+      ]}
+    >
       <View style={tw`flex-row items-center gap-3`}>
-        <View style={tw`bg-blue-50 p-2.5 rounded-xl`}>
+        <View style={isDark ? tw`bg-blue-500/20 p-2.5 rounded-xl` : tw`bg-blue-50 p-2.5 rounded-xl`}>
           <Feather name="clock" size={18} color={(tw.color("blue-600") as string)} />
         </View>
         <View>
-          <Text style={tw`text-xl font-black text-slate-800`}>
+          <Text style={[tw`text-xl font-black`, isDark ? tw`text-white` : tw`text-slate-800`]}>
             {item.hour.toString().padStart(2, "0")}:{item.minute.toString().padStart(2, "0")}
           </Text>
           <Text style={tw`text-xs text-slate-400`}>{item.title}</Text>
@@ -108,7 +115,7 @@ export default function LembretesScreen() {
         onPress={() => handleRemoveReminder(item.id)}
         style={({ pressed }) => [
           tw`p-2 rounded-xl`,
-          pressed && tw`bg-red-50`,
+          pressed && (isDark ? tw`bg-slate-800` : tw`bg-red-50`),
         ]}
         hitSlop={8}
       >
@@ -118,28 +125,36 @@ export default function LembretesScreen() {
   );
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       {/* Cabeçalho */}
-      <View style={tw`flex-row items-center justify-between p-4 border-b border-slate-200/80 bg-white`}>
+      <View
+        style={[
+          tw`flex-row items-center justify-between p-4 border-b`,
+          isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+        ]}
+      >
         <Pressable onPress={() => router.back()} style={tw`p-2 rounded-full`}>
-          <Feather name="arrow-left" size={20} color={(tw.color("slate-700") as string)} />
+          <Feather name="arrow-left" size={20} color={isDark ? (tw.color("slate-200") as string) : (tw.color("slate-700") as string)} />
         </Pressable>
-        <Text style={tw`text-lg font-bold text-slate-800`}>Lembretes Diários</Text>
+        <Text style={[tw`text-lg font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>Lembretes Diários</Text>
         <View style={tw`w-8`} />
       </View>
 
       {/* Form de Adicionar */}
-      <View style={tw`p-6 border-b border-slate-200/80 bg-white`}>
-        <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider mb-3`}>
-          Agendar Novo Horário
+      <View style={[tw`p-6 border-b`, isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`]}>
+        <Text style={[tw`text-xs font-bold uppercase tracking-wider mb-3`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+          Agendar Horário Empático
         </Text>
 
         {Platform.OS === "android" && (
           <Pressable
             onPress={() => setShowPicker(true)}
-            style={tw`bg-slate-50 rounded-2xl p-4 border border-slate-200 flex-row justify-between items-center mb-3`}
+            style={[
+              tw`rounded-2xl p-4 border flex-row justify-between items-center mb-3`,
+              isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-slate-50 border-slate-200`,
+            ]}
           >
-            <Text style={tw`text-sm font-semibold text-slate-600`}>Selecionar Horário</Text>
+            <Text style={[tw`text-sm font-semibold`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>Selecionar Horário</Text>
             <Feather name="clock" size={18} color={(tw.color("blue-600") as string)} />
           </Pressable>
         )}
@@ -155,7 +170,7 @@ export default function LembretesScreen() {
         )}
 
         <View style={tw`items-center my-2`}>
-          <Text style={tw`text-4xl font-black text-slate-900`}>
+          <Text style={[tw`text-4xl font-black`, isDark ? tw`text-white` : tw`text-slate-900`]}>
             {date.getHours().toString().padStart(2, "0")}:{date.getMinutes().toString().padStart(2, "0")}
           </Text>
         </View>
@@ -174,7 +189,7 @@ export default function LembretesScreen() {
           ) : (
             <>
               <Feather name="plus-circle" size={18} color="white" />
-              <Text style={tw`text-white font-bold text-sm`}>Adicionar Lembrete</Text>
+              <Text style={tw`text-white font-bold text-sm`}>Agendar Lembrete</Text>
             </>
           )}
         </Pressable>
@@ -182,7 +197,7 @@ export default function LembretesScreen() {
 
       {/* Lista de Lembretes */}
       <View style={tw`p-6 flex-1`}>
-        <Text style={tw`text-base font-bold text-slate-800 mb-3`}>Meus Lembretes Configurados</Text>
+        <Text style={[tw`text-base font-bold mb-3`, isDark ? tw`text-white` : tw`text-slate-800`]}>Lembretes Agendados</Text>
 
         {isLoadingList ? (
           <ActivityIndicator size="large" color={(tw.color("blue-600") as string)} style={tw`mt-6`} />
@@ -192,11 +207,11 @@ export default function LembretesScreen() {
             renderItem={renderReminderItem}
             keyExtractor={(item) => item.id}
             ListEmptyComponent={() => (
-              <View style={tw`p-8 bg-white rounded-3xl items-center border border-slate-200/80`}>
-                <Feather name="bell-off" size={32} color={(tw.color("slate-300") as string)} style={tw`mb-2`} />
-                <Text style={tw`text-sm font-bold text-slate-600`}>Nenhum lembrete cadastrado</Text>
+              <View style={[tw`p-8 rounded-3xl items-center border`, isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`]}>
+                <Feather name="bell-off" size={32} color={(tw.color("slate-400") as string)} style={tw`mb-2`} />
+                <Text style={[tw`text-sm font-bold`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>Nenhum lembrete cadastrado</Text>
                 <Text style={tw`text-xs text-slate-400 text-center mt-1`}>
-                  Escolha um horário acima para ser notificado diariamente.
+                  Escolha um horário acima para ser notificado gentilmente.
                 </Text>
               </View>
             )}
@@ -206,7 +221,8 @@ export default function LembretesScreen() {
                   <Pressable
                     onPress={handleCancelAllReminders}
                     style={({ pressed }) => [
-                      tw`bg-white mt-4 py-3 rounded-2xl border border-red-200 items-center justify-center flex-row gap-2`,
+                      tw`mt-4 py-3 rounded-2xl border items-center justify-center flex-row gap-2`,
+                      isDark ? tw`bg-slate-900 border-red-900/50` : tw`bg-white border-red-200`,
                       pressed && tw`bg-red-50`,
                     ]}
                   >

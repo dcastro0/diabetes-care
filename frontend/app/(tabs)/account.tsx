@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext"
 import { useAuth } from "@/hooks/useAuth"
 import { Feather } from "@expo/vector-icons"
 import { router } from "expo-router"
@@ -15,6 +16,7 @@ import tw from "twrnc"
 
 export default function AccountScreen() {
   const { signOut, authData } = useAuth()
+  const { isDark } = useTheme()
 
   const menuOptions = [
     { id: 1, label: "Editar Perfil", icon: "user", screen: "/edit_profile" },
@@ -26,7 +28,7 @@ export default function AccountScreen() {
 
   if (!authData) {
     return (
-      <SafeAreaView style={tw`flex-1 bg-slate-50 justify-center items-center`}>
+      <SafeAreaView style={[tw`flex-1 justify-center items-center`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
         <ActivityIndicator size="large" color={(tw.color("blue-600") as string)} />
       </SafeAreaView>
     )
@@ -37,14 +39,14 @@ export default function AccountScreen() {
   const streak = authData.streak_count ?? 0
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       <ScrollView contentContainerStyle={tw`p-6`}>
         {/* Cabeçalho */}
         <View style={tw`mb-6 mt-2 items-center`}>
-          <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
+          <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
             Prontuário & Configurações
           </Text>
-          <Text style={tw`text-2xl font-bold text-slate-800`}>
+          <Text style={[tw`text-2xl font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
             Perfil do Paciente
           </Text>
         </View>
@@ -125,26 +127,31 @@ export default function AccountScreen() {
         </View>
 
         {/* Opções do Menu */}
-        <View style={tw`bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden mb-6`}>
+        <View
+          style={[
+            tw`rounded-3xl border shadow-sm overflow-hidden mb-6`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+          ]}
+        >
           {menuOptions.map((option, index) => (
             <Pressable
               key={option.id}
               onPress={() => router.push(option.screen as any)}
               style={({ pressed }) => [
                 tw`flex-row items-center justify-between p-4.5`,
-                pressed && tw`bg-slate-50`,
-                index < menuOptions.length - 1 && tw`border-b border-slate-100`,
+                pressed && (isDark ? tw`bg-slate-800` : tw`bg-slate-50`),
+                index < menuOptions.length - 1 && (isDark ? tw`border-b border-slate-800` : tw`border-b border-slate-100`),
               ]}
             >
               <View style={tw`flex-row items-center gap-3.5`}>
-                <View style={tw`bg-slate-100 p-2.5 rounded-xl`}>
+                <View style={isDark ? tw`bg-slate-800 p-2.5 rounded-xl` : tw`bg-slate-100 p-2.5 rounded-xl`}>
                   <Feather
                     name={option.icon as any}
                     size={18}
-                    color={(tw.color("slate-700") as string)}
+                    color={isDark ? (tw.color("slate-200") as string) : (tw.color("slate-700") as string)}
                   />
                 </View>
-                <Text style={tw`text-sm font-bold text-slate-700`}>
+                <Text style={[tw`text-sm font-bold`, isDark ? tw`text-white` : tw`text-slate-700`]}>
                   {option.label}
                 </Text>
               </View>
@@ -164,7 +171,8 @@ export default function AccountScreen() {
             router.replace("/login")
           }}
           style={({ pressed }) => [
-            tw`bg-white py-4 rounded-2xl border border-red-200 shadow-sm flex-row justify-center items-center gap-2`,
+            tw`py-4 rounded-2xl border shadow-sm flex-row justify-center items-center gap-2`,
+            isDark ? tw`bg-slate-900 border-red-900/50` : tw`bg-white border-red-200`,
             pressed && tw`bg-red-50`,
           ]}
         >

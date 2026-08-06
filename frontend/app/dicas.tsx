@@ -1,4 +1,5 @@
 import { TipCard, TipItem } from "@/components/ui/TipCard";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
@@ -64,6 +65,7 @@ const HEALTH_TIPS: TipItem[] = [
 ];
 
 export default function DicasScreen() {
+  const { isDark } = useTheme();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [activeTip, setActiveTip] = useState<TipItem | null>(null);
@@ -81,18 +83,18 @@ export default function DicasScreen() {
   }, [search, selectedCategory]);
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       {/* Cabeçalho */}
-      <View style={tw`p-4 border-b border-slate-200/80 bg-white`}>
+      <View style={[tw`p-4 border-b shadow-sm`, isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`]}>
         <View style={tw`flex-row items-center justify-between mb-3`}>
           <Pressable onPress={() => router.back()} style={tw`p-2 rounded-full`}>
-            <Feather name="arrow-left" size={20} color={(tw.color("slate-700") as string)} />
+            <Feather name="arrow-left" size={20} color={isDark ? (tw.color("slate-200") as string) : (tw.color("slate-700") as string)} />
           </Pressable>
           <View style={tw`items-center flex-1`}>
-            <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
-              Guia Clínico do Paciente
+            <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-400`]}>
+              Guia de Saúde do Paciente
             </Text>
-            <Text style={tw`text-lg font-bold text-slate-800`}>
+            <Text style={[tw`text-lg font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
               Dicas & Educação em Saúde
             </Text>
           </View>
@@ -100,10 +102,13 @@ export default function DicasScreen() {
         </View>
 
         {/* Campo de Busca */}
-        <View style={tw`flex-row items-center bg-slate-100 px-3.5 py-2.5 rounded-2xl border border-slate-200/80 mb-3`}>
+        <View style={[
+          tw`flex-row items-center px-3.5 py-2.5 rounded-2xl border mb-3`,
+          isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-slate-100 border-slate-200/80`,
+        ]}>
           <Feather name="search" size={18} color={(tw.color("slate-400") as string)} style={tw`mr-2`} />
           <TextInput
-            style={tw`flex-1 text-sm font-medium text-slate-800`}
+            style={[tw`flex-1 text-sm font-medium`, isDark ? tw`text-white` : tw`text-slate-800`]}
             placeholder="Buscar por alimento, sintomas, exercícios..."
             placeholderTextColor={(tw.color("slate-400") as string)}
             value={search}
@@ -126,13 +131,19 @@ export default function DicasScreen() {
                 tw`px-3.5 py-1.5 rounded-full border mr-2`,
                 selectedCategory === cat
                   ? tw`bg-blue-600 border-blue-600`
+                  : isDark
+                  ? tw`bg-slate-800 border-slate-700`
                   : tw`bg-white border-slate-200`,
               ]}
             >
               <Text
                 style={[
                   tw`text-xs font-bold`,
-                  selectedCategory === cat ? tw`text-white` : tw`text-slate-600`,
+                  selectedCategory === cat
+                    ? tw`text-white`
+                    : isDark
+                    ? tw`text-slate-300`
+                    : tw`text-slate-600`,
                 ]}
               >
                 {cat}
@@ -149,9 +160,9 @@ export default function DicasScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={tw`p-6`}
         ListEmptyComponent={
-          <View style={tw`items-center justify-center py-16 bg-white rounded-3xl border border-slate-200/80 p-6`}>
+          <View style={[tw`items-center justify-center py-16 rounded-3xl border p-6`, isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`]}>
             <Feather name="book-open" size={32} color={(tw.color("slate-300") as string)} style={tw`mb-2`} />
-            <Text style={tw`text-sm font-bold text-slate-700`}>Nenhum artigo encontrado</Text>
+            <Text style={[tw`text-sm font-bold`, isDark ? tw`text-slate-300` : tw`text-slate-700`]}>Nenhum artigo encontrado</Text>
             <Text style={tw`text-xs text-slate-400 text-center mt-1`}>
               Tente buscar por termos diferentes ou selecione outra categoria.
             </Text>
@@ -167,7 +178,7 @@ export default function DicasScreen() {
         onRequestClose={() => setActiveTip(null)}
       >
         <View style={tw`flex-1 justify-end bg-slate-900/60`}>
-          <View style={tw`bg-white rounded-t-3xl p-6 max-h-[85%] border-t border-slate-200`}>
+          <View style={[tw`rounded-t-3xl p-6 max-h-[85%] border-t`, isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200`]}>
             <View style={tw`flex-row justify-between items-start mb-4`}>
               <View style={tw`flex-row items-center gap-3`}>
                 <Image
@@ -178,18 +189,18 @@ export default function DicasScreen() {
                   <Text style={tw`text-xs font-bold text-blue-600 uppercase tracking-wider`}>
                     Dica do Glico
                   </Text>
-                  <Text style={tw`text-lg font-bold text-slate-800`} numberOfLines={1}>
+                  <Text style={[tw`text-lg font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]} numberOfLines={1}>
                     {activeTip?.title}
                   </Text>
                 </View>
               </View>
-              <Pressable onPress={() => setActiveTip(null)} style={tw`p-2 bg-slate-100 rounded-full`}>
-                <Feather name="x" size={20} color={(tw.color("slate-600") as string)} />
+              <Pressable onPress={() => setActiveTip(null)} style={isDark ? tw`p-2 bg-slate-800 rounded-full` : tw`p-2 bg-slate-100 rounded-full`}>
+                <Feather name="x" size={20} color={isDark ? "white" : (tw.color("slate-600") as string)} />
               </Pressable>
             </View>
 
             <ScrollView style={tw`mb-6`}>
-              <Text style={tw`text-base text-slate-700 leading-6 font-medium mb-4`}>
+              <Text style={[tw`text-base leading-6 font-medium mb-4`, isDark ? tw`text-slate-300` : tw`text-slate-700`]}>
                 {activeTip?.content}
               </Text>
               <View style={tw`bg-blue-50 border border-blue-200 rounded-2xl p-4 flex-row items-center gap-3`}>

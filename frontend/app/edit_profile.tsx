@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { EditProfileFormData, editProfileSchema } from "@/schemas/authSchema";
 import { Feather } from "@expo/vector-icons";
@@ -21,6 +22,7 @@ import tw from "twrnc";
 
 export default function EditarPerfilScreen() {
   const { authData, updateAuthData } = useAuth();
+  const { isDark } = useTheme();
 
   const {
     control,
@@ -48,17 +50,22 @@ export default function EditarPerfilScreen() {
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       <KeyboardAvoidingView
         style={tw`flex-1`}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/* Cabeçalho */}
-        <View style={tw`flex-row items-center justify-between p-4 border-b border-slate-200/80 bg-white`}>
+        <View
+          style={[
+            tw`flex-row items-center justify-between p-4 border-b`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+          ]}
+        >
           <Pressable onPress={() => router.back()} style={tw`p-2 rounded-full`}>
-            <Feather name="arrow-left" size={20} color={(tw.color("slate-700") as string)} />
+            <Feather name="arrow-left" size={20} color={isDark ? (tw.color("slate-200") as string) : (tw.color("slate-700") as string)} />
           </Pressable>
-          <Text style={tw`text-lg font-bold text-slate-800`}>
+          <Text style={[tw`text-lg font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
             Editar Perfil
           </Text>
           <View style={tw`w-8`} />
@@ -67,8 +74,8 @@ export default function EditarPerfilScreen() {
         <ScrollView contentContainerStyle={tw`p-6`}>
           {/* Avatar com Badge de Edição */}
           <View style={tw`items-center my-6`}>
-            <View style={tw`w-24 h-24 rounded-full bg-blue-100 items-center justify-center border-2 border-blue-200 mb-2`}>
-              <Text style={tw`text-4xl font-bold text-blue-600`}>
+            <View style={tw`w-24 h-24 rounded-full bg-blue-600 items-center justify-center border-2 border-blue-400 mb-2 shadow-md`}>
+              <Text style={tw`text-4xl font-bold text-white`}>
                 {authData?.nome?.[0] ?? "U"}
               </Text>
             </View>
@@ -83,18 +90,19 @@ export default function EditarPerfilScreen() {
             name="nome"
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-4`}>
-                <Text style={tw`text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5`}>
+                <Text style={[tw`text-xs font-bold uppercase tracking-wider mb-1.5`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
                   Nome Completo
                 </Text>
                 <View
                   style={[
-                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
-                    errors.nome ? tw`border-red-500` : tw`border-slate-200/80`,
+                    tw`flex-row items-center rounded-2xl p-4 shadow-sm border-2`,
+                    isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+                    errors.nome ? tw`border-red-500` : null,
                   ]}
                 >
                   <Feather name="user" size={18} color={(tw.color("slate-400") as string)} />
                   <TextInput
-                    style={tw`flex-1 ml-3 text-base text-slate-800`}
+                    style={[tw`flex-1 ml-3 text-base`, isDark ? tw`text-white` : tw`text-slate-800`]}
                     placeholder="Seu nome"
                     placeholderTextColor={(tw.color("slate-400") as string)}
                     onBlur={onBlur}
@@ -117,18 +125,19 @@ export default function EditarPerfilScreen() {
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-8`}>
-                <Text style={tw`text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5`}>
+                <Text style={[tw`text-xs font-bold uppercase tracking-wider mb-1.5`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
                   Endereço de E-mail
                 </Text>
                 <View
                   style={[
-                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
-                    errors.email ? tw`border-red-500` : tw`border-slate-200/80`,
+                    tw`flex-row items-center rounded-2xl p-4 shadow-sm border-2`,
+                    isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+                    errors.email ? tw`border-red-500` : null,
                   ]}
                 >
                   <Feather name="mail" size={18} color={(tw.color("slate-400") as string)} />
                   <TextInput
-                    style={tw`flex-1 ml-3 text-base text-slate-800`}
+                    style={[tw`flex-1 ml-3 text-base`, isDark ? tw`text-white` : tw`text-slate-800`]}
                     placeholder="seu@email.com"
                     placeholderTextColor={(tw.color("slate-400") as string)}
                     keyboardType="email-address"

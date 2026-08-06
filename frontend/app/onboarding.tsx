@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -13,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
 
 export default function OnboardingScreen() {
+  const { isDark } = useTheme();
   const [step, setStep] = useState(1);
   const [diabetesType, setDiabetesType] = useState<string>("Tipo 2");
 
@@ -33,7 +35,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50 justify-between p-6`}>
+    <SafeAreaView style={[tw`flex-1 justify-between p-6`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       {/* Indicadores de Progresso */}
       <View style={tw`flex-row justify-center gap-2 mt-4`}>
         {[1, 2, 3].map((i) => (
@@ -41,7 +43,11 @@ export default function OnboardingScreen() {
             key={i}
             style={[
               tw`h-2 rounded-full transition-all`,
-              i === step ? tw`w-8 bg-blue-600` : tw`w-2 bg-slate-200`,
+              i === step
+                ? tw`w-8 bg-blue-600`
+                : isDark
+                ? tw`w-2 bg-slate-800`
+                : tw`w-2 bg-slate-200`,
             ]}
           />
         ))}
@@ -57,28 +63,28 @@ export default function OnboardingScreen() {
             />
             <View style={tw`bg-blue-50 border border-blue-200 px-4 py-1.5 rounded-full mb-3`}>
               <Text style={tw`text-xs font-bold text-blue-700 uppercase tracking-wider`}>
-                Assistente de Saúde
+                Seu Par de Saúde
               </Text>
             </View>
-            <Text style={tw`text-3xl font-black text-slate-800 text-center mb-3`}>
+            <Text style={[tw`text-3xl font-black text-center mb-3`, isDark ? tw`text-white` : tw`text-slate-800`]}>
               Olá! Eu sou o Glico.
             </Text>
-            <Text style={tw`text-base text-slate-600 text-center leading-6 px-4`}>
-              Estou aqui para cuidar do seu controle de glicemia de forma simples, acolhedora e sem complicações.
+            <Text style={[tw`text-base text-center leading-6 px-4`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>
+              Estou aqui para te acompanhar no seu controle de glicemia de forma simples, no seu ritmo e sem complicações.
             </Text>
           </View>
         )}
 
         {step === 2 && (
           <View style={tw`w-full items-center`}>
-            <View style={tw`bg-blue-100 p-4 rounded-full mb-4`}>
+            <View style={tw`bg-blue-100/60 p-4 rounded-full mb-4`}>
               <Feather name="heart" size={36} color={(tw.color("blue-600") as string)} />
             </View>
-            <Text style={tw`text-2xl font-bold text-slate-800 text-center mb-2`}>
-              Qual o seu tipo de acompanhamento?
+            <Text style={[tw`text-2xl font-bold text-center mb-2`, isDark ? tw`text-white` : tw`text-slate-800`]}>
+              Qual o seu objetivo principal?
             </Text>
-            <Text style={tw`text-sm text-slate-500 text-center mb-6`}>
-              Isso nos ajuda a personalizar as recomendações clínicas para você.
+            <Text style={[tw`text-sm text-center mb-6`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+              Isso nos ajuda a adaptar as dicas e informações para você.
             </Text>
 
             <View style={tw`w-full gap-2.5`}>
@@ -87,16 +93,22 @@ export default function OnboardingScreen() {
                   key={type}
                   onPress={() => setDiabetesType(type)}
                   style={({ pressed }) => [
-                    tw`p-4 rounded-2xl border-2 flex-row justify-between items-center bg-white shadow-sm`,
-                    diabetesType === type ? tw`border-blue-600 bg-blue-50/50` : tw`border-slate-200`,
+                    tw`p-4 rounded-2xl border-2 flex-row justify-between items-center shadow-sm`,
+                    isDark
+                      ? diabetesType === type
+                        ? tw`border-blue-500 bg-slate-900`
+                        : tw`border-slate-800 bg-slate-900/60`
+                      : diabetesType === type
+                      ? tw`border-blue-600 bg-blue-50/50`
+                      : tw`border-slate-200 bg-white`,
                     pressed && tw`opacity-80`,
                   ]}
                 >
-                  <Text style={tw`text-base font-bold text-slate-800`}>{type}</Text>
+                  <Text style={[tw`text-base font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>{type}</Text>
                   {diabetesType === type ? (
                     <Feather name="check-circle" size={20} color={(tw.color("blue-600") as string)} />
                   ) : (
-                    <View style={tw`w-5 h-5 rounded-full border border-slate-300`} />
+                    <View style={tw`w-5 h-5 rounded-full border border-slate-400`} />
                   )}
                 </Pressable>
               ))}
@@ -111,16 +123,16 @@ export default function OnboardingScreen() {
               style={tw`w-52 h-52 rounded-3xl mb-6 shadow-lg`}
               resizeMode="contain"
             />
-            <Text style={tw`text-2xl font-bold text-slate-800 text-center mb-3`}>
-              Tudo pronto para começar!
+            <Text style={[tw`text-2xl font-bold text-center mb-3`, isDark ? tw`text-white` : tw`text-slate-800`]}>
+              Você no controle, sem estresse
             </Text>
-            <Text style={tw`text-base text-slate-600 text-center leading-6 px-4 mb-4`}>
-              Você poderá registrar suas leituras, visualizar a estimativa de HbA1c e gerar relatórios em PDF para seu médico.
+            <Text style={[tw`text-base text-center leading-6 px-4 mb-4`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>
+              Registre quando puder, veja estimativas de HbA1c e compartilhe relatórios completos com seu médico.
             </Text>
             <View style={tw`bg-emerald-50 border border-emerald-200 rounded-2xl p-4 w-full flex-row items-center gap-3`}>
               <Feather name="shield-check" size={24} color={(tw.color("emerald-600") as string)} />
               <Text style={tw`text-xs font-semibold text-emerald-800 flex-1 leading-5`}>
-                Seus dados ficam protegidos no seu dispositivo e criptografados no servidor.
+                Seus dados pertencem a você: salvos localmente e seguros na nuvem.
               </Text>
             </View>
           </View>
@@ -137,7 +149,7 @@ export default function OnboardingScreen() {
           ]}
         >
           <Text style={tw`text-white font-bold text-base`}>
-            {step === 3 ? "Começar Agora" : "Continuar"}
+            {step === 3 ? "Entrar no Aplicativo" : "Continuar"}
           </Text>
           <Feather name="arrow-right" size={20} color="white" />
         </Pressable>

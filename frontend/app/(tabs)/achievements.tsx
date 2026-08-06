@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext"
 import { useAchievementsQuery } from "@/hooks/useAchievementsQuery"
 import { useAuth } from "@/hooks/useAuth"
 import { Achievement } from "@/services/achievementsServices"
@@ -14,14 +15,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
-const AchievementCard = ({ item }: { item: Achievement }) => {
+const AchievementCard = ({ item, isDark }: { item: Achievement; isDark: boolean }) => {
   const percent = item.goal ? Math.min(100, Math.round((item.progress / item.goal) * 100)) : 0
 
   return (
     <View
       style={[
-        tw`w-[48%] bg-white p-4.5 rounded-3xl mb-4 border border-slate-200/80 shadow-sm flex-col justify-between`,
-        item.unlocked ? tw`border-emerald-200 bg-white` : tw`opacity-80`,
+        tw`w-[48%] p-4.5 rounded-3xl mb-4 border shadow-sm flex-col justify-between`,
+        isDark
+          ? item.unlocked
+            ? tw`bg-slate-900 border-emerald-500/40`
+            : tw`bg-slate-900/60 border-slate-800 opacity-80`
+          : item.unlocked
+          ? tw`bg-white border-emerald-200`
+          : tw`bg-white border-slate-200/80 opacity-80`,
       ]}
     >
       <View>
@@ -31,6 +38,8 @@ const AchievementCard = ({ item }: { item: Achievement }) => {
               tw`p-3 rounded-2xl border`,
               item.unlocked
                 ? tw`bg-emerald-50 border-emerald-200`
+                : isDark
+                ? tw`bg-slate-800 border-slate-700`
                 : tw`bg-slate-100 border-slate-200`,
             ]}
           >
@@ -49,16 +58,16 @@ const AchievementCard = ({ item }: { item: Achievement }) => {
               <Text style={tw`text-[10px] font-bold text-emerald-700`}>Concluído</Text>
             </View>
           ) : (
-            <View style={tw`bg-slate-100 px-2 py-0.5 rounded-full`}>
-              <Text style={tw`text-[10px] font-bold text-slate-500`}>{percent}%</Text>
+            <View style={isDark ? tw`bg-slate-800 px-2 py-0.5 rounded-full` : tw`bg-slate-100 px-2 py-0.5 rounded-full`}>
+              <Text style={isDark ? tw`text-[10px] font-bold text-slate-300` : tw`text-[10px] font-bold text-slate-500`}>{percent}%</Text>
             </View>
           )}
         </View>
 
-        <Text style={tw`text-sm font-bold text-slate-800 mb-1`} numberOfLines={1}>
+        <Text style={[tw`text-sm font-bold mb-1`, isDark ? tw`text-white` : tw`text-slate-800`]} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={tw`text-xs text-slate-500 mb-3 leading-4 h-9`} numberOfLines={2}>
+        <Text style={[tw`text-xs mb-3 leading-4 h-9`, isDark ? tw`text-slate-400` : tw`text-slate-500`]} numberOfLines={2}>
           {item.description}
         </Text>
       </View>
@@ -68,11 +77,11 @@ const AchievementCard = ({ item }: { item: Achievement }) => {
           <View>
             <View style={tw`flex-row justify-between mb-1`}>
               <Text style={tw`text-[10px] font-semibold text-slate-400 uppercase`}>Progresso</Text>
-              <Text style={tw`text-[10px] font-bold text-slate-600`}>
+              <Text style={isDark ? tw`text-[10px] font-bold text-slate-300` : tw`text-[10px] font-bold text-slate-600`}>
                 {item.progress}/{item.goal}
               </Text>
             </View>
-            <View style={tw`bg-slate-100 rounded-full h-1.5 w-full overflow-hidden`}>
+            <View style={isDark ? tw`bg-slate-800 rounded-full h-1.5 w-full overflow-hidden` : tw`bg-slate-100 rounded-full h-1.5 w-full overflow-hidden`}>
               <View
                 style={[
                   tw`bg-blue-600 h-1.5 rounded-full`,
@@ -94,6 +103,7 @@ const AchievementCard = ({ item }: { item: Achievement }) => {
 
 export default function AchievementsScreen() {
   const { authData } = useAuth()
+  const { isDark } = useTheme()
   const { data: achievements = [], isLoading, error, refetch, isRefetching } = useAchievementsQuery(authData?.token)
 
   const unlockedCount = achievements.filter((a) => a.unlocked).length
@@ -103,10 +113,10 @@ export default function AchievementsScreen() {
   const ListHeader = (
     <View style={tw`mb-6 mt-2`}>
       <View style={tw`items-center mb-4`}>
-        <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
+        <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
           Acompanhamento Médico
         </Text>
-        <Text style={tw`text-2xl font-bold text-slate-800`}>
+        <Text style={[tw`text-2xl font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
           Conquistas Clínicas
         </Text>
       </View>
@@ -142,7 +152,7 @@ export default function AchievementsScreen() {
 
   if (isLoading && !isRefetching) {
     return (
-      <SafeAreaView style={tw`flex-1 justify-center items-center bg-slate-50`}>
+      <SafeAreaView style={[tw`flex-1 justify-center items-center`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
         <ActivityIndicator size="large" color={(tw.color("blue-600") as string)} />
         <Text style={tw`mt-4 text-xs font-semibold text-slate-500`}>Carregando conquistas clínicas...</Text>
       </SafeAreaView>
@@ -151,7 +161,7 @@ export default function AchievementsScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={tw`flex-1 justify-center items-center bg-slate-50 p-6`}>
+      <SafeAreaView style={[tw`flex-1 justify-center items-center p-6`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
         <Text style={tw`text-base font-bold text-red-500 mb-4 text-center`}>
           {error instanceof Error ? error.message : "Erro ao carregar conquistas"}
         </Text>
@@ -166,10 +176,10 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       <FlatList
         data={achievements}
-        renderItem={({ item }) => <AchievementCard item={item} />}
+        renderItem={({ item }) => <AchievementCard item={item} isDark={isDark} />}
         keyExtractor={(item) => item.achievement_id.toString()}
         numColumns={2}
         ListHeaderComponent={ListHeader}
