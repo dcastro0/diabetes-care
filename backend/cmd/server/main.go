@@ -60,6 +60,9 @@ func main() {
 	healthH := handler.NewHealthHandler(dbPool)
 	authH := handler.NewAuthHandler(userRepo, cfg.JWTSecret)
 	glucoseH := handler.NewGlucoseHandler()
+	heartbeatH := handler.NewHeartbeatHandler()
+	measurementsH := handler.NewMeasurementsHandler()
+	achievementsH := handler.NewAchievementsHandler()
 
 	// 5. Setup Router (Chi)
 	r := chi.NewRouter()
@@ -96,6 +99,11 @@ func main() {
 		// Protected Routes
 		r.Group(func(r chi.Router) {
 			r.Use(customMiddleware.Auth(cfg.JWTSecret))
+
+			r.Post("/heartbeat", heartbeatH.Heartbeat)
+			r.Get("/achievements", achievementsH.List)
+
+			r.Post("/measurements/sync", measurementsH.Sync)
 
 			r.Route("/glucose", func(r chi.Router) {
 				r.Get("/", glucoseH.ListLogs)

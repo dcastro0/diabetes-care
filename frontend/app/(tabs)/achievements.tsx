@@ -8,10 +8,10 @@ import {
     FlatList,
     Pressable,
     RefreshControl,
-    SafeAreaView,
     Text,
     View,
 } from "react-native"
+import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from "twrnc"
 
 const getIconColor = (unlocked: boolean) => {
