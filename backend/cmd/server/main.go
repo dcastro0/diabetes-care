@@ -104,6 +104,7 @@ func main() {
 			r.Get("/achievements", achievementsH.List)
 
 			r.Post("/measurements/sync", measurementsH.Sync)
+			r.Get("/measurements/stats", measurementsH.GetStats)
 
 			r.Route("/glucose", func(r chi.Router) {
 				r.Get("/", glucoseH.ListLogs)

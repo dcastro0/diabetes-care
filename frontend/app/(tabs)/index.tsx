@@ -1,4 +1,5 @@
 import { GlucoseBadge } from "@/components/ui/GlucoseBadge";
+import { GlucoseChartCard } from "@/components/ui/GlucoseChartCard";
 import { useAuth } from "@/hooks/useAuth";
 import { sendHeartbeat } from "@/services/heartbeat";
 import { syncMeasurements } from "@/services/measurementService";
@@ -114,7 +115,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/* Badge de Sequência Clínica (Sem Emojis) */}
+          {/* Badge de Sequência Clínica */}
           <View style={tw`flex-row items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200`}>
             <Feather name="shield" size={14} color={(tw.color("blue-600") as string)} />
             <Text style={tw`text-xs font-bold text-blue-700`}>
@@ -186,34 +187,8 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Módulos Rápidos */}
-        <View style={tw`flex-row gap-4 mb-6`}>
-          <View style={tw`flex-1 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm justify-between`}>
-            <View style={tw`bg-blue-50 p-2.5 rounded-2xl w-10 h-10 items-center justify-center mb-3`}>
-              <Feather name="activity" size={20} color={(tw.color("blue-600") as string)} />
-            </View>
-            <View>
-              <Text style={tw`text-xl font-bold text-slate-800`}>{diasOfensiva} Dias</Text>
-              <Text style={tw`text-xs font-semibold text-slate-400 uppercase`}>Frequência Diária</Text>
-            </View>
-          </View>
-
-          <Pressable
-            onPress={() => router.push("/(tabs)/achievements")}
-            style={({ pressed }) => [
-              tw`flex-1 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm justify-between`,
-              pressed && tw`bg-slate-50`,
-            ]}
-          >
-            <View style={tw`bg-amber-50 p-2.5 rounded-2xl w-10 h-10 items-center justify-center mb-3`}>
-              <Feather name="award" size={20} color={(tw.color("amber-600") as string)} />
-            </View>
-            <View>
-              <Text style={tw`text-xl font-bold text-slate-800`}>Metas</Text>
-              <Text style={tw`text-xs font-semibold text-slate-400 uppercase`}>Ver Conquistas</Text>
-            </View>
-          </Pressable>
-        </View>
+        {/* Módulo 1: Card de Tendência Clínica e Estatísticas eA1c / TIR */}
+        <GlucoseChartCard measurements={measurements} />
 
         {/* Histórico Recente */}
         <View>
@@ -224,7 +199,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <View style={tw`bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden`}>
+          <View style={tw`bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden mb-6`}>
             {loading && !refreshing ? (
               <View style={tw`py-6 items-center`}>
                 <ActivityIndicator size="small" color={(tw.color("blue-600") as string)} />
