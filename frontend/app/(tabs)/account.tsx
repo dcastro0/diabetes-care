@@ -32,7 +32,6 @@ export default function AccountScreen() {
   }
 
   const totalMedicoes = authData.totalMedicoes ?? 0
-  const pontos = authData.pontos ?? 0
   const membroDesde = authData.membroDesde ?? "—"
   const streak = authData.streak_count ?? 0
 
@@ -86,13 +85,6 @@ export default function AccountScreen() {
                 {totalMedicoes}
               </Text>
               <Text style={tw`text-xs font-semibold text-slate-400 uppercase`}>Medições</Text>
-            </View>
-            <View style={tw`w-[1px] bg-slate-100 h-8 self-center`} />
-            <View style={tw`items-center`}>
-              <Text style={tw`text-lg font-bold text-slate-800`}>
-                {pontos}
-              </Text>
-              <Text style={tw`text-xs font-semibold text-slate-400 uppercase`}>Pontos</Text>
             </View>
             <View style={tw`w-[1px] bg-slate-100 h-8 self-center`} />
             <View style={tw`items-center`}>

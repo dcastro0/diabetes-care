@@ -33,19 +33,11 @@ export default function LoginScreen() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const userData = (await signIn(data)) as { streak_count?: number } | undefined
-      const streak = userData?.streak_count ?? 0
-      if (streak && streak > 0) {
-        Alert.alert(
-          "Bem-vindo de volta!",
-          `Sua sequência atual é de ${streak} dia(s). Continue assim!`,
-        )
-      } else {
-        Alert.alert(
-          "Bem-vindo!",
-          "Boa sorte no seu controle. Registre sua primeira medição hoje!",
-        )
-      }
+      await signIn(data)
+      Alert.alert(
+        "Bem-vindo de volta!",
+        "Seu painel de monitoramento de glicemia está atualizado.",
+      )
       router.replace("/(tabs)")
     } catch (error: any) {
       Alert.alert(

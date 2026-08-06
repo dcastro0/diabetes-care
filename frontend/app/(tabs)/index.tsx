@@ -32,7 +32,6 @@ export default function HomeScreen() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
   const nome = authData?.nome ?? "Usuário";
-  const pontosTotais = authData?.pontos ?? 0;
   const diasOfensiva = authData?.streak_count ?? 0;
 
   const load = useCallback(async () => {
@@ -130,10 +129,6 @@ export default function HomeScreen() {
             <View>
               <Text style={tw`text-lg font-bold text-white`}>Controle Diário</Text>
               <Text style={tw`text-slate-400 text-xs mt-0.5`}>Monitoramento Contínuo</Text>
-            </View>
-            <View style={tw`flex-row items-center gap-1.5 bg-slate-800 rounded-full px-3 py-1 border border-slate-700`}>
-              <Feather name="zap" size={14} color={(tw.color("amber-400") as string)} />
-              <Text style={tw`text-white font-bold text-xs`}>{pontosTotais} pts</Text>
             </View>
           </View>
 

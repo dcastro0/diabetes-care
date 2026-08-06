@@ -35,20 +35,12 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       await registerService.signUp(data)
-      const userData = await signIn({ email: data.email, password: data.password })
+      await signIn({ email: data.email, password: data.password })
 
-      const streak = (userData as { streak_count?: number } | undefined)?.streak_count ?? 0
-      if (streak && streak > 0) {
-        Alert.alert(
-          "Registro concluído!",
-          `Bem-vindo! Sua sequência atual é de ${streak} dia(s).`,
-        )
-      } else {
-        Alert.alert(
-          "Registro concluído!",
-          "Bem-vindo ao Diabetes Care! Comece registrando sua primeira medição.",
-        )
-      }
+      Alert.alert(
+        "Cadastro concluído com sucesso!",
+        "Bem-vindo ao Diabetes Care. Registre sua primeira medição para iniciar o acompanhamento.",
+      )
       router.replace("/(tabs)")
     } catch (error: any) {
       Alert.alert(
