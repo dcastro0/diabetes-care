@@ -15,6 +15,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -113,7 +114,7 @@ export default function HomeScreen() {
         }
       >
         {/* Cabeçalho */}
-        <View style={tw`flex-row justify-between items-center mb-6 mt-2`}>
+        <View style={tw`flex-row justify-between items-center mb-5 mt-2`}>
           <View>
             <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
               Painel de Saúde
@@ -130,6 +131,31 @@ export default function HomeScreen() {
               {diasOfensiva} {diasOfensiva === 1 ? "Dia Ativo" : "Dias Ativos"}
             </Text>
           </View>
+        </View>
+
+        {/* Card de Acolhimento do Mascote Glico */}
+        <View style={tw`bg-blue-600/10 border border-blue-200/80 rounded-3xl p-4 mb-5 flex-row items-center justify-between`}>
+          <View style={tw`flex-row items-center gap-3 flex-1 mr-2`}>
+            <Image
+              source={require("../../assets/images/glico_mascot.png")}
+              style={tw`w-12 h-12 rounded-full border border-blue-200`}
+            />
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-xs font-bold text-blue-700 uppercase tracking-wider`}>
+                Glico Acolhe
+              </Text>
+              <Text style={tw`text-sm font-bold text-slate-800`} numberOfLines={1}>
+                Olá! Vamos cuidar do seu controle hoje?
+              </Text>
+            </View>
+          </View>
+          <Pressable
+            onPress={() => router.push("/dicas")}
+            style={tw`bg-blue-600 px-3 py-2 rounded-xl flex-row items-center gap-1`}
+          >
+            <Feather name="book-open" size={14} color="white" />
+            <Text style={tw`text-xs font-bold text-white`}>Dicas</Text>
+          </Pressable>
         </View>
 
         {/* Card Principal - Visor Digital de Glicemia */}

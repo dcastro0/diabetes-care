@@ -18,9 +18,10 @@ export default function AccountScreen() {
 
   const menuOptions = [
     { id: 1, label: "Editar Perfil", icon: "user", screen: "/edit_profile" },
-    { id: 2, label: "Lembretes e Alertas", icon: "clock", screen: "/lembretes" },
-    { id: 3, label: "Configurações do Sistema", icon: "settings", screen: "/config" },
-    { id: 4, label: "Central de Ajuda e Suporte", icon: "help-circle", screen: "/help" },
+    { id: 2, label: "Dicas & Educação em Saúde", icon: "book-open", screen: "/dicas" },
+    { id: 3, label: "Lembretes e Alertas", icon: "clock", screen: "/lembretes" },
+    { id: 4, label: "Configurações do Sistema", icon: "settings", screen: "/config" },
+    { id: 5, label: "Central de Ajuda e Suporte", icon: "help-circle", screen: "/help" },
   ]
 
   if (!authData) {
@@ -53,9 +54,10 @@ export default function AccountScreen() {
           {/* Header do Cartão de Identificação */}
           <View style={tw`flex-row justify-between items-center border-b border-slate-800 pb-4 mb-4`}>
             <View style={tw`flex-row items-center gap-2`}>
-              <View style={tw`bg-blue-500/20 p-2 rounded-xl border border-blue-400/30`}>
-                <Feather name="shield" size={16} color={(tw.color("blue-400") as string)} />
-              </View>
+              <Image
+                source={require("../../assets/images/glico_mascot.png")}
+                style={tw`w-7 h-7 rounded-full border border-blue-400/40`}
+              />
               <View>
                 <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider`}>
                   Diabetes Care Medical ID
