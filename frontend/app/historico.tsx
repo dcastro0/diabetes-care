@@ -5,7 +5,7 @@ import {
   initMeasurementTable,
   Measurement,
 } from "@/services/orm/entities/measurement"
-import { generateHistoryPdf } from "@/services/pdfService"
+import { exportHistoryPdf, previewHistoryPdf } from "@/services/pdfService"
 import { getGlucoseLevelInfo, GlucoseLevel } from "@/utils/glucoseLevels"
 import { Feather } from "@expo/vector-icons"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
@@ -171,9 +171,15 @@ export default function HistoricoScreen() {
     )
   }, [allMeasurements, activeFilter])
 
-  const handleGeneratePdf = async () => {
+  const handlePreviewPdf = async () => {
     setIsGeneratingPdf(true)
-    await generateHistoryPdf(filteredMeasurements)
+    await previewHistoryPdf(filteredMeasurements)
+    setIsGeneratingPdf(false)
+  }
+
+  const handleExportPdf = async () => {
+    setIsGeneratingPdf(true)
+    await exportHistoryPdf(filteredMeasurements)
     setIsGeneratingPdf(false)
   }
 
@@ -220,30 +226,45 @@ export default function HistoricoScreen() {
             </Text>
             <Text style={tw`text-2xl font-bold text-slate-800`}>Histórico</Text>
           </View>
-          <Pressable
-            onPress={handleGeneratePdf}
-            disabled={isGeneratingPdf || filteredMeasurements.length === 0}
-            style={({ pressed }) => [
-              tw`flex-row items-center gap-2 px-3.5 py-2 rounded-2xl border border-blue-500 bg-blue-50`,
-              pressed && tw`bg-blue-100`,
-              (isGeneratingPdf || filteredMeasurements.length === 0) &&
-                tw`opacity-50 border-slate-200 bg-slate-50`,
-            ]}
-          >
-            {isGeneratingPdf ? (
-              <ActivityIndicator size="small" color={(tw.color("blue-600") as string)} />
-            ) : (
-              <Feather name="file-text" size={16} color={(tw.color("blue-600") as string)} />
-            )}
-            <Text
-              style={[
-                tw`font-bold text-xs text-blue-600`,
-                (isGeneratingPdf || filteredMeasurements.length === 0) && tw`text-slate-400`,
+
+          {/* Botões de Ação para Visualizar e Exportar PDF */}
+          <View style={tw`flex-row items-center gap-2`}>
+            <Pressable
+              onPress={handlePreviewPdf}
+              disabled={isGeneratingPdf || filteredMeasurements.length === 0}
+              style={({ pressed }) => [
+                tw`flex-row items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-300 bg-slate-50`,
+                pressed && tw`bg-slate-100`,
+                (isGeneratingPdf || filteredMeasurements.length === 0) &&
+                  tw`opacity-50 border-slate-200`,
               ]}
             >
-              Exportar PDF
-            </Text>
-          </Pressable>
+              {isGeneratingPdf ? (
+                <ActivityIndicator size="small" color={(tw.color("slate-600") as string)} />
+              ) : (
+                <Feather name="eye" size={15} color={(tw.color("slate-700") as string)} />
+              )}
+              <Text style={tw`font-bold text-xs text-slate-700`}>
+                Visualizar
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleExportPdf}
+              disabled={isGeneratingPdf || filteredMeasurements.length === 0}
+              style={({ pressed }) => [
+                tw`flex-row items-center gap-1.5 px-3 py-2 rounded-2xl bg-blue-600 shadow-sm`,
+                pressed && tw`bg-blue-700`,
+                (isGeneratingPdf || filteredMeasurements.length === 0) &&
+                  tw`opacity-50 bg-slate-300 shadow-none`,
+              ]}
+            >
+              <Feather name="share-2" size={15} color="white" />
+              <Text style={tw`font-bold text-xs text-white`}>
+                Exportar
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Filtros de Categoria */}
