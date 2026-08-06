@@ -54,9 +54,11 @@ func main() {
 		logger.Info("conexão com PostgreSQL estabelecida com sucesso!")
 	}
 
-	// 4. Initialize Handlers
+	// 4. Initialize Repositories & Handlers
+	userRepo := repository.NewUserRepository(dbPool)
+
 	healthH := handler.NewHealthHandler(dbPool)
-	authH := handler.NewAuthHandler(cfg.JWTSecret)
+	authH := handler.NewAuthHandler(userRepo, cfg.JWTSecret)
 	glucoseH := handler.NewGlucoseHandler()
 
 	// 5. Setup Router (Chi)

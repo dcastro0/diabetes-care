@@ -8,17 +8,26 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
+import Constants, { ExecutionEnvironment } from "expo-constants";
+
 SplashScreen.preventAutoHideAsync();
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+try {
+  // Only execute notification handler configuration if supported safely
+  if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+  }
+} catch (e) {
+  console.warn("expo-notifications handler skipped in Expo Go environment", e);
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
