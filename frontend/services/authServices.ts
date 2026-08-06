@@ -1,28 +1,39 @@
-import { AuthData } from "@/interfaces/AuthData"
-import { LoginFormValues } from "@/schema/loginSchema"; // 1. Importa do schema
-import { api } from "@/services/api"
-import axios from "axios"
+import { AuthData } from "@/interfaces/AuthData";
+import { LoginFormValues } from "@/schema/loginSchema";
+import { api } from "@/services/api";
+import axios from "axios";
 
-// 2. Usa LoginFormValues
 async function signIn(data: LoginFormValues): Promise<AuthData> {
-  // 3. Removemos a checagem desnecessária
-  // if (!data.email || !data.password) ...
-
   try {
-    const response = await api.post<AuthData>(`/login`, {
+    const response = await api.post<any>(`/login`, {
       email: data.email,
       password: data.password,
-    })
-    return response.data
+    });
+
+    const resData = response.data;
+    const user = resData.user || resData;
+
+    return {
+      id: user.id || resData.id || "1",
+      nome: user.name || user.nome || resData.name || resData.nome || "Usuário",
+      email: user.email || resData.email || data.email,
+      token: resData.token,
+      membroDesde: user.created_at || resData.created_at,
+    };
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      throw new Error("Credenciais inválidas. Verifique seu email e senha.")
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        throw new Error("Credenciais inválidas. Verifique seu email e senha.");
+      }
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
     }
 
     throw new Error(
-      "Não foi possível conectar ao servidor. Tente novamente mais tarde.",
-    )
+      "Não foi possível conectar ao servidor Backend Go. Verifique se 'make dev-backend' está em execução.",
+    );
   }
 }
 
-export const authService = { signIn }
+export const authService = { signIn };

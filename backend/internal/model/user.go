@@ -21,6 +21,7 @@ type User struct {
 
 type RegisterRequest struct {
 	Name         string `json:"name"`
+	Nome         string `json:"nome"`
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	DiabetesType string `json:"diabetes_type"`
@@ -32,6 +33,11 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	Token        string `json:"token"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Nome         string `json:"nome"`
+	Email        string `json:"email"`
+	DiabetesType string `json:"diabetes_type"`
+	User         User   `json:"user"`
 }

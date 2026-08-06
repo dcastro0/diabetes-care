@@ -31,6 +31,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Name == "" && req.Nome != "" {
+		req.Name = req.Nome
+	}
+
 	if req.Email == "" || req.Password == "" || req.Name == "" {
 		http.Error(w, `{"error":"campos obrigatórios ausentes (name, email, password)"}`, http.StatusBadRequest)
 		return
@@ -83,8 +87,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(model.AuthResponse{
-		Token: token,
-		User:  user,
+		Token:        token,
+		ID:           user.ID.String(),
+		Name:         user.Name,
+		Nome:         user.Name,
+		Email:        user.Email,
+		DiabetesType: user.DiabetesType,
+		User:         user,
 	})
 }
 
@@ -137,8 +146,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(model.AuthResponse{
-		Token: token,
-		User:  *user,
+		Token:        token,
+		ID:           user.ID.String(),
+		Name:         user.Name,
+		Nome:         user.Name,
+		Email:        user.Email,
+		DiabetesType: user.DiabetesType,
+		User:         *user,
 	})
 }
 

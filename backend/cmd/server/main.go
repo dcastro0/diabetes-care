@@ -85,6 +85,9 @@ func main() {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public Auth Routes
+		r.Post("/login", authH.Login)
+		r.Post("/register", authH.Register)
+
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", authH.Register)
 			r.Post("/login", authH.Login)
