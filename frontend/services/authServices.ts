@@ -1,7 +1,6 @@
 import { AuthData } from "@/interfaces/AuthData";
 import { LoginFormValues } from "@/schema/loginSchema";
-import { api } from "@/services/api";
-import axios from "axios";
+import { api, ApiError } from "@/services/api";
 
 async function signIn(data: LoginFormValues): Promise<AuthData> {
   try {
@@ -21,12 +20,12 @@ async function signIn(data: LoginFormValues): Promise<AuthData> {
       membroDesde: user.created_at || resData.created_at,
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
+    if (error instanceof ApiError) {
+      if (error.status === 401) {
         throw new Error("Credenciais inválidas. Verifique seu email e senha.");
       }
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
+      if (error.data?.error || error.message) {
+        throw new Error(error.data?.error || error.message);
       }
     }
 
