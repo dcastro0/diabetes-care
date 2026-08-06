@@ -2,7 +2,7 @@
 # 🩸 Diabetes Care - Unified Makefile
 # ==============================================================================
 
-.PHONY: help install dev-backend dev-frontend build-backend test-backend lint-backend lint-frontend lint clean
+.PHONY: help install dev-backend dev-frontend build-backend test-backend lint-backend lint-frontend lint clean db-up db-down db-logs docker-up
 
 # Default Target
 .DEFAULT_GOAL := help
@@ -27,10 +27,11 @@ help:
 	@echo "    test-backend   Executa os testes unitários do backend Go"
 	@echo "    lint-backend   Executa 'go vet' e verificações estáticas do Go"
 	@echo ""
-	@echo "  Banco de Dados (PostgreSQL):"
+	@echo "  Banco de Dados & Docker:"
 	@echo "    db-up          Sobe o container do PostgreSQL via Docker Compose"
 	@echo "    db-down        Para e remove o container do PostgreSQL"
 	@echo "    db-logs        Exibe os logs em tempo real do container PostgreSQL"
+	@echo "    docker-up      Sobe a stack completa (PostgreSQL + Backend Go) via Docker"
 	@echo ""
 	@echo "  Frontend (Expo):"
 	@echo "    dev-frontend   Inicia o servidor de desenvolvimento do Expo"
@@ -52,17 +53,23 @@ dev-backend:
 ## db-up: Sobe o container PostgreSQL via Docker Compose
 db-up:
 	@echo "🐘 Subindo container do PostgreSQL..."
-	@docker compose up -d
+	@docker compose up -d postgres
 	@echo "✅ PostgreSQL rodando na porta 5432!"
 
-## db-down: Para e remove o container PostgreSQL
+## db-down: Para e remove os containers Docker
 db-down:
-	@echo "🛑 Parando container do PostgreSQL..."
+	@echo "🛑 Parando containers Docker..."
 	@docker compose down
 
 ## db-logs: Exibe os logs do container PostgreSQL
 db-logs:
 	@docker compose logs -f postgres
+
+## docker-up: Sobe a stack completa (PostgreSQL + Backend Go) via Docker Compose
+docker-up:
+	@echo "🐳 Subindo stack completa (PostgreSQL + Backend Go)..."
+	@docker compose up -d --build
+	@echo "✅ Stack em execução nas portas 8080 (Go API) e 5432 (PostgreSQL)!"
 
 ## dev-frontend: Executa o app Expo
 dev-frontend:
@@ -99,4 +106,3 @@ clean:
 	@rm -rf backend/bin
 	@rm -rf frontend/dist frontend/.expo
 	@echo "✅ Limpeza concluída!"
-
