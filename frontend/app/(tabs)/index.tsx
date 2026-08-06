@@ -29,7 +29,7 @@ import tw from "twrnc";
 export default function HomeScreen() {
   const router = useRouter();
   const { authData, updateAuthData } = useAuth();
-  const { toggleTheme, isDark } = useTheme();
+  const { isDark } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -116,7 +116,7 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Cabeçalho Acolhedor com Alternador de Tema Sol/Lua */}
+        {/* Cabeçalho Acolhedor sem botão de troca de tema */}
         <View style={tw`flex-row justify-between items-center mb-5 mt-2`}>
           <View>
             <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
@@ -127,29 +127,12 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <View style={tw`flex-row items-center gap-2`}>
-            {/* Botão de Alternar Tema Claro/Escuro */}
-            <Pressable
-              onPress={toggleTheme}
-              style={[
-                tw`p-2.5 rounded-full border`,
-                isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-white border-slate-200/80 shadow-sm`,
-              ]}
-            >
-              <Feather
-                name={isDark ? "sun" : "moon"}
-                size={18}
-                color={isDark ? (tw.color("amber-400") as string) : (tw.color("slate-700") as string)}
-              />
-            </Pressable>
-
-            {/* Badge de Dias Acompanhados */}
-            <View style={tw`flex-row items-center gap-1.5 bg-blue-50 px-3 py-2 rounded-full border border-blue-200`}>
-              <Feather name="heart" size={14} color={(tw.color("blue-600") as string)} />
-              <Text style={tw`text-xs font-bold text-blue-700`}>
-                {diasOfensiva} {diasOfensiva === 1 ? "Dia de Cuidado" : "Dias de Cuidado"}
-              </Text>
-            </View>
+          {/* Badge de Dias Acompanhados */}
+          <View style={tw`flex-row items-center gap-1.5 bg-blue-50 px-3.5 py-2 rounded-full border border-blue-200`}>
+            <Feather name="heart" size={14} color={(tw.color("blue-600") as string)} />
+            <Text style={tw`text-xs font-bold text-blue-700`}>
+              {diasOfensiva} {diasOfensiva === 1 ? "Dia de Cuidado" : "Dias de Cuidado"}
+            </Text>
           </View>
         </View>
 
