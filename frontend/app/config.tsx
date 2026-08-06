@@ -38,12 +38,12 @@ export default function ConfiguracoesScreen() {
   };
 
   return (
-    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-900` : tw`bg-slate-50`]}>
+    <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
       {/* Cabeçalho */}
       <View
         style={[
           tw`flex-row items-center justify-between p-4 border-b`,
-          isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-white border-slate-200/80`,
+          isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
         ]}
       >
         <Pressable onPress={() => router.back()} style={tw`p-2 rounded-full`}>
@@ -68,7 +68,7 @@ export default function ConfiguracoesScreen() {
         <View
           style={[
             tw`rounded-3xl p-5 border shadow-sm mb-6`,
-            isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-white border-slate-200/80`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
           ]}
         >
           <View style={tw`flex-row items-center gap-3 mb-4`}>
@@ -129,14 +129,14 @@ export default function ConfiguracoesScreen() {
         <View
           style={[
             tw`rounded-3xl border shadow-sm overflow-hidden mb-6`,
-            isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-white border-slate-200/80`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
           ]}
         >
           <Pressable
             onPress={handleResetOnboarding}
             style={({ pressed }) => [
               tw`flex-row items-center justify-between p-4.5`,
-              pressed && (isDark ? tw`bg-slate-700` : tw`bg-slate-50`),
+              pressed && (isDark ? tw`bg-slate-800` : tw`bg-slate-50`),
             ]}
           >
             <View style={tw`flex-row items-center gap-3.5`}>
@@ -164,7 +164,7 @@ export default function ConfiguracoesScreen() {
         <View
           style={[
             tw`rounded-3xl border shadow-sm overflow-hidden mb-6`,
-            isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-white border-slate-200/80`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
           ]}
         >
           <View style={tw`flex-row items-center justify-between p-4 border-b border-slate-100`}>
@@ -218,7 +218,7 @@ export default function ConfiguracoesScreen() {
         <View
           style={[
             tw`rounded-3xl border shadow-sm overflow-hidden mb-6`,
-            isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-white border-slate-200/80`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
           ]}
         >
           <Pressable
