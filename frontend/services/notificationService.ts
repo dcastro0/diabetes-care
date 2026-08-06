@@ -1,121 +1,121 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
-import { Alert, Platform } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
 
-// Interface para definir a estrutura de um lembrete
 export interface Reminder {
-  id: string; // ID local (ex: timestamp)
+  id: string;
   hour: number;
   minute: number;
-  notificationId: string; // ID retornado pelo Expo Notifications
+  title: string;
+  enabled: boolean;
 }
 
-const STORAGE_KEY = '@DiabetesCare:reminders';
+const REMINDERS_STORAGE_KEY = "@DiabetesCare:reminders";
 
-// --- (Função de permissão - Permanece igual) ---
-export async function requestNotificationPermissions() {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+// Configurar comportamento de notificacao em primeiro plano
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    Alert.alert('Permissão Negada', 'Não poderemos enviar lembretes se não tivermos permissão.');
+export async function requestNotificationPermissions(): Promise<boolean> {
+  try {
+    if (Platform.OS === "web") return false;
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    return finalStatus === "granted";
+  } catch (error) {
+    console.warn("Permissão de notificação indisponível:", error);
     return false;
   }
-
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('reminders', {
-      name: 'Lembretes de Medição',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      sound: 'default',
-    });
-  }
-  return true;
 }
 
-// --- (Novas funções de gestão da lista) ---
-
-// 1. Buscar todos os lembretes guardados no AsyncStorage
 export async function getReminders(): Promise<Reminder[]> {
   try {
-    const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-    return jsonValue != null ? JSON.parse(jsonValue) : [];
-  } catch (e) {
-    console.error('Erro ao buscar lembretes', e);
+    const raw = await AsyncStorage.getItem(REMINDERS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    console.error("Erro ao carregar lembretes salvos:", error);
     return [];
   }
 }
 
-// 2. Adicionar um novo lembrete
-export async function addReminder(hour: number, minute: number): Promise<Reminder[]> {
+export async function saveReminders(reminders: Reminder[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(reminders));
+  } catch (error) {
+    console.error("Erro ao salvar lembretes:", error);
+  }
+}
+
+export async function addReminder(hour: number, minute: number, title = "Lembrete de Glicemia"): Promise<Reminder[]> {
+  const current = await getReminders();
+  const id = `reminder_${Date.now()}`;
+
   const hasPermission = await requestNotificationPermissions();
-  if (!hasPermission) {
-    return [];
+  if (hasPermission && Platform.OS !== "web") {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        identifier: id,
+        content: {
+          title: "Diabetes Care",
+          body: title,
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour,
+          minute,
+        },
+      });
+    } catch (err) {
+      console.warn("Erro ao agendar notificação nativa:", err);
+    }
   }
 
-  // Agenda a notificação no sistema
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Diabetes Care: Lembrete',
-      body: 'Está na hora de registar a sua glicemia!',
-      sound: 'default',
-    },
-    trigger: {
-      hour,
-      minute,
-      repeats: true, // Repete diariamente
-      channelId: 'reminders',
-    },
-  });
-
-  // Cria o nosso objeto de lembrete local
   const newReminder: Reminder = {
-    id: new Date().toISOString(), // ID único simples
+    id,
     hour,
     minute,
-    notificationId,
+    title,
+    enabled: true,
   };
 
-  // Guarda no AsyncStorage
-  const existingReminders = await getReminders();
-  const updatedReminders = [...existingReminders, newReminder];
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedReminders));
-
-  console.log(`Lembrete adicionado para ${hour}:${minute} (ID: ${notificationId})`);
-  return updatedReminders; // Retorna a lista atualizada
+  const updated = [...current, newReminder];
+  await saveReminders(updated);
+  return updated;
 }
 
-// 3. Remover um lembrete específico
 export async function removeReminder(id: string): Promise<Reminder[]> {
-  const existingReminders = await getReminders();
-  const reminderToRemove = existingReminders.find(r => r.id === id);
-
-  if (reminderToRemove) {
-    // Cancela a notificação agendada no sistema
-    await Notifications.cancelScheduledNotificationAsync(reminderToRemove.notificationId);
-    
-    // Remove da lista do AsyncStorage
-    const updatedReminders = existingReminders.filter(r => r.id !== id);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedReminders));
-    console.log(`Lembrete removido (ID: ${reminderToRemove.notificationId})`);
-    return updatedReminders;
+  const current = await getReminders();
+  if (Platform.OS !== "web") {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(id);
+    } catch (err) {
+      console.warn("Erro ao cancelar notificação:", err);
+    }
   }
-  return existingReminders;
+
+  const updated = current.filter((r) => r.id !== id);
+  await saveReminders(updated);
+  return updated;
 }
 
-// 4. Remover TODOS os lembretes
 export async function cancelAllReminders(): Promise<void> {
-  // Cancela todas as notificações agendadas no sistema
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  
-  // Limpa a lista no AsyncStorage
-  await AsyncStorage.removeItem(STORAGE_KEY);
-
-  console.log('Todos os lembretes foram cancelados.');
-  Alert.alert('Lembretes Cancelados', 'Todos os seus lembretes foram removidos.');
+  if (Platform.OS !== "web") {
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch (err) {
+      console.warn("Erro ao cancelar todas as notificações:", err);
+    }
+  }
+  await saveReminders([]);
 }
