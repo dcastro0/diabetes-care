@@ -1,42 +1,39 @@
 import { useAuth } from "@/hooks/useAuth"
-import { LoginFormValues, loginSchema } from "@/schema/loginSchema"
+import { LoginFormData, loginSchema } from "@/schemas/authSchema"
 import { Feather } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { router } from "expo-router"
 import React from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
 export default function LoginScreen() {
-  const { signIn } = useAuth() 
+  const { signIn } = useAuth()
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   })
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      // 3. signIn agora retorna os dados do usuário
       const userData = (await signIn(data)) as { streak_count?: number } | undefined
-
-      // 4. Usamos os dados retornados, e não o estado
       const streak = userData?.streak_count ?? 0
       if (streak && streak > 0) {
         Alert.alert(
@@ -53,7 +50,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       Alert.alert(
         "Erro no Login",
-        error.message || "Não foi possível entrar.",
+        error.message || "Não foi possível entrar com estas credenciais.",
       )
     }
   }
@@ -70,7 +67,7 @@ export default function LoginScreen() {
         >
           <View style={tw`items-center mb-10`}>
             <View style={tw`bg-blue-100 p-5 rounded-full mb-4`}>
-              <Feather name="droplet" size={48} color={tw.color("blue-600")} />
+              <Feather name="droplet" size={48} color={(tw.color("blue-600") as string)} />
             </View>
             <Text style={tw`text-3xl font-bold text-slate-800`}>Diabetes Care</Text>
             <Text style={tw`text-base text-slate-500`}>Controle na palma da mão</Text>
@@ -82,17 +79,16 @@ export default function LoginScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-4`}>
                 <View
-                  style={tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
-                    errors.email
-                      ? "border-2 border-red-500"
-                      : "border-2 border-transparent"
-                  }`}
+                  style={[
+                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
+                    errors.email ? tw`border-red-500` : tw`border-transparent`,
+                  ]}
                 >
-                  <Feather name="mail" size={20} color={tw.color("slate-400")} />
+                  <Feather name="mail" size={20} color={(tw.color("slate-400") as string)} />
                   <TextInput
                     style={tw`flex-1 ml-3 text-base text-slate-800`}
                     placeholder="Digite seu email"
-                    placeholderTextColor={tw.color("slate-400")}
+                    placeholderTextColor={(tw.color("slate-400") as string)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     onBlur={onBlur}
@@ -101,7 +97,9 @@ export default function LoginScreen() {
                   />
                 </View>
                 {errors.email && (
-                  <Text style={tw`text-red-500 mt-1 ml-2`}>{errors.email.message}</Text>
+                  <Text style={tw`text-red-500 mt-1 ml-2 text-xs font-semibold`}>
+                    {errors.email.message}
+                  </Text>
                 )}
               </View>
             )}
@@ -113,17 +111,16 @@ export default function LoginScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-4`}>
                 <View
-                  style={tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
-                    errors.password
-                      ? "border-2 border-red-500"
-                      : "border-2 border-transparent"
-                  }`}
+                  style={[
+                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
+                    errors.password ? tw`border-red-500` : tw`border-transparent`,
+                  ]}
                 >
-                  <Feather name="lock" size={20} color={tw.color("slate-400")} />
+                  <Feather name="lock" size={20} color={(tw.color("slate-400") as string)} />
                   <TextInput
                     style={tw`flex-1 ml-3 text-base text-slate-800`}
                     placeholder="Digite sua senha"
-                    placeholderTextColor={tw.color("slate-400")}
+                    placeholderTextColor={(tw.color("slate-400") as string)}
                     secureTextEntry
                     onBlur={onBlur}
                     onChangeText={onChange}
@@ -131,16 +128,19 @@ export default function LoginScreen() {
                   />
                 </View>
                 {errors.password && (
-                  <Text style={tw`text-red-500 mt-1 ml-2`}>{errors.password.message}</Text>
+                  <Text style={tw`text-red-500 mt-1 ml-2 text-xs font-semibold`}>
+                    {errors.password.message}
+                  </Text>
                 )}
               </View>
             )}
           />
 
           <View style={tw`items-end mb-6`}>
-            {/* TODO: Implementar recuperação de senha */}
             <Pressable>
-              <Text style={tw`text-blue-600 font-semibold`}>Esqueceu a senha?</Text>
+              <Text style={tw`text-blue-600 font-semibold text-xs`}>
+                Esqueceu a senha?
+              </Text>
             </Pressable>
           </View>
 
@@ -161,9 +161,9 @@ export default function LoginScreen() {
           </Pressable>
 
           <View style={tw`flex-row justify-center mt-8`}>
-            <Text style={tw`text-slate-500`}>Não tem uma conta? </Text>
+            <Text style={tw`text-slate-500 text-sm`}>Não tem uma conta? </Text>
             <Pressable onPress={() => router.replace("/register")}>
-              <Text style={tw`text-blue-600 font-bold`}>Cadastre-se</Text>
+              <Text style={tw`text-blue-600 font-bold text-sm`}>Cadastre-se</Text>
             </Pressable>
           </View>
         </ScrollView>

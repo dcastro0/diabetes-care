@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth"
-import { RegisterFormValues, registerSchema } from "@/schema/registerSchema"
+import { RegisterFormData, registerSchema } from "@/schemas/authSchema"
 import { registerService } from "@/services/registerService"
 import { Feather } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -7,41 +7,36 @@ import { router } from "expo-router"
 import React from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native"
-// 1. IMPORT CORRIGIDO
 import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
 export default function RegisterScreen() {
-  const { signIn } = useAuth() // 2. Não precisamos do authData aqui
+  const { signIn } = useAuth()
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterFormValues>({
+  } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: { nome: "", email: "", password: "", confirmPassword: "" },
   })
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      // 1. Registra o usuário
       await registerService.signUp(data)
-
-      // 2. Faz o auto-login e captura os dados retornados
       const userData = await signIn({ email: data.email, password: data.password })
 
-      // 3. Usa os dados retornados (userData) para checar a streak
       const streak = (userData as { streak_count?: number } | undefined)?.streak_count ?? 0
       if (streak && streak > 0) {
         Alert.alert(
@@ -51,14 +46,14 @@ export default function RegisterScreen() {
       } else {
         Alert.alert(
           "Registro concluído!",
-          "Bem-vindo! Comece registrando sua primeira medição.",
+          "Bem-vindo ao Diabetes Care! Comece registrando sua primeira medição.",
         )
       }
       router.replace("/(tabs)")
     } catch (error: any) {
       Alert.alert(
         "Erro no Cadastro",
-        error.message || "Não foi possível se cadastrar.",
+        error.message || "Não foi possível realizar o cadastro.",
       )
     }
   }
@@ -73,9 +68,12 @@ export default function RegisterScreen() {
           contentContainerStyle={tw`flex-grow justify-center p-8`}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={tw`items-center mb-10`}>
-            <Text style={tw`text-3xl font-bold text-slate-800`}>Crie sua Conta</Text>
-            <Text style={tw`text-base text-slate-500`}>É rápido e fácil</Text>
+          <View style={tw`items-center mb-8`}>
+            <View style={tw`bg-blue-100 p-4 rounded-full mb-3`}>
+              <Feather name="user-plus" size={36} color={(tw.color("blue-600") as string)} />
+            </View>
+            <Text style={tw`text-2xl font-bold text-slate-800`}>Crie sua Conta</Text>
+            <Text style={tw`text-sm text-slate-500`}>Preencha os campos abaixo</Text>
           </View>
 
           <Controller
@@ -84,24 +82,25 @@ export default function RegisterScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-4`}>
                 <View
-                  style={tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
-                    errors.nome
-                      ? "border-2 border-red-500"
-                      : "border-2 border-transparent"
-                  }`}
+                  style={[
+                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
+                    errors.nome ? tw`border-red-500` : tw`border-transparent`,
+                  ]}
                 >
-                  <Feather name="user" size={20} color={tw.color("slate-400")} />
+                  <Feather name="user" size={20} color={(tw.color("slate-400") as string)} />
                   <TextInput
                     style={tw`flex-1 ml-3 text-base text-slate-800`}
                     placeholder="Digite seu nome completo"
-                    placeholderTextColor={tw.color("slate-400")}
+                    placeholderTextColor={(tw.color("slate-400") as string)}
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
                   />
                 </View>
                 {errors.nome && (
-                  <Text style={tw`text-red-500 mt-1 ml-2`}>{errors.nome.message}</Text>
+                  <Text style={tw`text-red-500 mt-1 ml-2 text-xs font-semibold`}>
+                    {errors.nome.message}
+                  </Text>
                 )}
               </View>
             )}
@@ -113,17 +112,16 @@ export default function RegisterScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-4`}>
                 <View
-                  style={tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
-                    errors.email
-                      ? "border-2 border-red-500"
-                      : "border-2 border-transparent"
-                  }`}
+                  style={[
+                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
+                    errors.email ? tw`border-red-500` : tw`border-transparent`,
+                  ]}
                 >
-                  <Feather name="mail" size={20} color={tw.color("slate-400")} />
+                  <Feather name="mail" size={20} color={(tw.color("slate-400") as string)} />
                   <TextInput
                     style={tw`flex-1 ml-3 text-base text-slate-800`}
                     placeholder="Digite seu email"
-                    placeholderTextColor={tw.color("slate-400")}
+                    placeholderTextColor={(tw.color("slate-400") as string)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     onBlur={onBlur}
@@ -132,7 +130,9 @@ export default function RegisterScreen() {
                   />
                 </View>
                 {errors.email && (
-                  <Text style={tw`text-red-500 mt-1 ml-2`}>{errors.email.message}</Text>
+                  <Text style={tw`text-red-500 mt-1 ml-2 text-xs font-semibold`}>
+                    {errors.email.message}
+                  </Text>
                 )}
               </View>
             )}
@@ -144,17 +144,16 @@ export default function RegisterScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-4`}>
                 <View
-                  style={tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
-                    errors.password
-                      ? "border-2 border-red-500"
-                      : "border-2 border-transparent"
-                  }`}
+                  style={[
+                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
+                    errors.password ? tw`border-red-500` : tw`border-transparent`,
+                  ]}
                 >
-                  <Feather name="lock" size={20} color={tw.color("slate-400")} />
+                  <Feather name="lock" size={20} color={(tw.color("slate-400") as string)} />
                   <TextInput
                     style={tw`flex-1 ml-3 text-base text-slate-800`}
                     placeholder="Crie uma senha"
-                    placeholderTextColor={tw.color("slate-400")}
+                    placeholderTextColor={(tw.color("slate-400") as string)}
                     secureTextEntry
                     onBlur={onBlur}
                     onChangeText={onChange}
@@ -162,7 +161,9 @@ export default function RegisterScreen() {
                   />
                 </View>
                 {errors.password && (
-                  <Text style={tw`text-red-500 mt-1 ml-2`}>{errors.password.message}</Text>
+                  <Text style={tw`text-red-500 mt-1 ml-2 text-xs font-semibold`}>
+                    {errors.password.message}
+                  </Text>
                 )}
               </View>
             )}
@@ -174,17 +175,16 @@ export default function RegisterScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <View style={tw`mb-6`}>
                 <View
-                  style={tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
-                    errors.confirmPassword
-                      ? "border-2 border-red-500"
-                      : "border-2 border-transparent"
-                  }`}
+                  style={[
+                    tw`flex-row items-center bg-white rounded-2xl p-4 shadow-sm border-2`,
+                    errors.confirmPassword ? tw`border-red-500` : tw`border-transparent`,
+                  ]}
                 >
-                  <Feather name="lock" size={20} color={tw.color("slate-400")} />
+                  <Feather name="lock" size={20} color={(tw.color("slate-400") as string)} />
                   <TextInput
                     style={tw`flex-1 ml-3 text-base text-slate-800`}
                     placeholder="Confirme sua senha"
-                    placeholderTextColor={tw.color("slate-400")}
+                    placeholderTextColor={(tw.color("slate-400") as string)}
                     secureTextEntry
                     onBlur={onBlur}
                     onChangeText={onChange}
@@ -192,7 +192,7 @@ export default function RegisterScreen() {
                   />
                 </View>
                 {errors.confirmPassword && (
-                  <Text style={tw`text-red-500 mt-1 ml-2`}>
+                  <Text style={tw`text-red-500 mt-1 ml-2 text-xs font-semibold`}>
                     {errors.confirmPassword.message}
                   </Text>
                 )}
@@ -217,9 +217,9 @@ export default function RegisterScreen() {
           </Pressable>
 
           <View style={tw`flex-row justify-center mt-8`}>
-            <Text style={tw`text-slate-500`}>Já tem uma conta? </Text>
+            <Text style={tw`text-slate-500 text-sm`}>Já tem uma conta? </Text>
             <Pressable onPress={() => router.replace("/login")}>
-              <Text style={tw`text-blue-600 font-bold`}>Faça Login</Text>
+              <Text style={tw`text-blue-600 font-bold text-sm`}>Faça Login</Text>
             </Pressable>
           </View>
         </ScrollView>
