@@ -21,7 +21,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     async function loadAuthDataFromStorage() {
       try {
-        const auth = await getSecureItem("@AuthData")
+        const auth = await getSecureItem("AuthData")
         if (auth) {
           const parsed = JSON.parse(auth)
           setAuthData(parsed)
@@ -54,7 +54,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         setAuthData(auth)
-        await setSecureItem("@AuthData", JSON.stringify(auth))
+        await setSecureItem("AuthData", JSON.stringify(auth))
         return auth
       } else {
         throw new Error(
@@ -67,7 +67,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = useCallback(async (): Promise<void> => {
     setAuthData(undefined)
-    await deleteSecureItem("@AuthData")
+    await deleteSecureItem("AuthData")
   }, [])
 
   const updateAuthData = useCallback(async (newData: Partial<AuthData>) => {
@@ -76,7 +76,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const updatedData = { ...currentData, ...newData }
 
-      setSecureItem("@AuthData", JSON.stringify(updatedData)).catch(
+      setSecureItem("AuthData", JSON.stringify(updatedData)).catch(
         (err) => {
           console.error("Falha ao salvar authData atualizado com segurança:", err)
         },
