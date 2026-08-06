@@ -13,7 +13,7 @@ import {
   Text,
   View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"; // Import correto
+import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
 import {
@@ -22,20 +22,18 @@ import {
   initMeasurementTable,
   Measurement,
 } from "@/services/orm/entities/measurement"
-import { generateHistoryPdf } from "@/services/pdfService"; // Serviço para PDF
-import { getGlucoseLevelInfo, GlucoseLevel } from "@/utils/glucoseLevels"; // Helper para cores/níveis
+import { generateHistoryPdf } from "@/services/pdfService"
+import { getGlucoseLevelInfo, GlucoseLevel } from "@/utils/glucoseLevels"
 
-// Constantes
-const ITEM_HEIGHT = 72 // Altura estimada para getItemLayout
+const ITEM_HEIGHT = 72
 
-// --- Componente do Item ---
 interface ItemRowProps {
   item: Measurement
   onDelete: (id: number) => void
 }
 
 const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete }) => {
-  const levelInfo = getGlucoseLevelInfo(item.value) // Pega info do nível
+  const levelInfo = getGlucoseLevelInfo(item.value)
 
   const formattedDate = item.date
     ? new Date(item.date).toLocaleString("pt-BR", {
@@ -56,15 +54,12 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete }) => {
     <View
       style={tw`flex-row items-center justify-between px-4 py-3 h-[${ITEM_HEIGHT}px]`}
     >
-      {/* Informações da Medição */}
       <View style={tw`flex-row items-center gap-3 flex-1 mr-2`}>
-        {/* Ícone com cor de fundo */}
-        <View style={tw.style(`p-2 rounded-full`, levelInfo.bgColorClass)}>
-          <Feather name="droplet" size={18} color={tw.color(levelInfo.colorClass.replace('text-', ''))} />
+        <View style={[tw`p-2 rounded-full`, tw`${levelInfo.bgColorClass}`]}>
+          <Feather name="droplet" size={18} color={(tw.color(levelInfo.colorClass.replace('text-', '')) as string) || "blue"} />
         </View>
-        {/* Valor (com cor), Data e Nota */}
         <View style={tw`flex-1`}>
-          <Text style={tw.style(`text-lg font-semibold`, levelInfo.colorClass)}>
+          <Text style={[tw`text-lg font-semibold`, tw`${levelInfo.colorClass}`]}>
             {item.value} mg/dL
           </Text>
           <Text style={tw`text-sm text-slate-500`} numberOfLines={1}>
@@ -77,30 +72,27 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete }) => {
           )}
         </View>
       </View>
-      {/* Botão Deletar */}
       <Pressable
         onPress={handleDeletePress}
-        style={({ pressed }) =>
-          tw.style(`p-2 rounded-full`, pressed && `bg-red-100`)
-        }
+        style={({ pressed }) => [
+          tw`p-2 rounded-full`,
+          pressed && tw`bg-red-100`,
+        ]}
         hitSlop={10}
       >
-        <Feather name="trash-2" size={20} color={tw.color("red-500")} />
+        <Feather name="trash-2" size={20} color={(tw.color("red-500") as string)} />
       </Pressable>
     </View>
   )
 }
 
-// Item memoizado
 const MemoizedItemRow = React.memo(ItemRow)
 
-// --- Componente Separador ---
 const ItemSeparator = () => <View style={styles.separator} />
 
-// --- Componente Lista Vazia ---
 const EmptyList = ({ filterActive }: { filterActive: boolean }) => (
   <View style={tw`items-center justify-center py-16 px-4`}>
-    <Feather name="info" size={40} color={tw.color("slate-400")} />
+    <Feather name="info" size={40} color={(tw.color("slate-400") as string)} />
     <Text style={tw`mt-4 text-lg text-slate-500 text-center`}>
       {filterActive
         ? "Nenhuma medição encontrada para este filtro."
@@ -109,7 +101,6 @@ const EmptyList = ({ filterActive }: { filterActive: boolean }) => (
   </View>
 )
 
-// --- Componente Principal da Tela ---
 export default function HistoricoScreen() {
   const [allMeasurements, setAllMeasurements] = useState<Measurement[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -117,7 +108,6 @@ export default function HistoricoScreen() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [activeFilter, setActiveFilter] = useState<GlucoseLevel | "todos">("todos")
 
-  // --- Carregamento de Dados ---
   const loadData = useCallback(async () => {
     try {
       await initMeasurementTable()
@@ -140,14 +130,11 @@ export default function HistoricoScreen() {
     loadData()
   }, [loadData])
 
-  // --- Lógica de Refresh ---
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true)
     loadData()
-    // TODO: Sincronizar aqui se necessário
   }, [loadData])
 
-  // --- Lógica de Deletar ---
   const handleDelete = useCallback(
     (idToDelete: number) => {
       Alert.alert(
@@ -165,7 +152,6 @@ export default function HistoricoScreen() {
               )
               try {
                 await deleteMeasurement(idToDelete)
-                // TODO: Chamar API para deletar no servidor
               } catch (error) {
                 console.error("Erro ao deletar medição:", error)
                 setAllMeasurements(previousMeasurements)
@@ -180,7 +166,6 @@ export default function HistoricoScreen() {
     [allMeasurements],
   )
 
-  // --- Filtra os dados ---
   const filteredMeasurements = useMemo(() => {
     if (activeFilter === "todos") {
       return allMeasurements
@@ -190,15 +175,12 @@ export default function HistoricoScreen() {
     )
   }, [allMeasurements, activeFilter])
 
-  // --- Lógica de Gerar PDF ---
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true)
-    // Passa os dados JÁ FILTRADOS para o PDF
     await generateHistoryPdf(filteredMeasurements)
     setIsGeneratingPdf(false)
   }
 
-  // --- Props da FlatList ---
   const keyExtractor = useCallback((item: Measurement) => item.id!.toString(), [])
   const renderItem = useCallback(
     ({ item }: { item: Measurement }) => (
@@ -215,75 +197,71 @@ export default function HistoricoScreen() {
     [],
   )
 
-  // --- Opções de Filtro (UI) ---
   const filterOptions: { label: string; value: GlucoseLevel | "todos"; color: string }[] = [
     { label: "Todos", value: "todos", color: "bg-slate-200 text-slate-700 border-slate-300" },
     { label: "Bom", value: "bom", color: "bg-green-100 text-green-700 border-green-200" },
     { label: "Atenção", value: "atencao", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
     { label: "Risco", value: "risco", color: "bg-orange-100 text-orange-700 border-orange-200" },
     { label: "Alto Risco", value: "alto_risco", color: "bg-red-100 text-red-700 border-red-200" },
-  ];
+  ]
 
-  // --- Renderização ---
   if (isLoading && allMeasurements.length === 0) {
     return (
       <SafeAreaView style={tw`flex-1 justify-center items-center bg-slate-50`}>
-        <ActivityIndicator size="large" color={tw.color("blue-600")} />
+        <ActivityIndicator size="large" color={(tw.color("blue-600") as string)} />
       </SafeAreaView>
     )
   }
 
   return (
     <SafeAreaView style={tw`flex-1 bg-slate-100`}>
-      {/* Cabeçalho */}
       <View style={tw`p-4 bg-white border-b border-slate-200 shadow-sm`}>
         <View style={tw`flex-row justify-between items-center mb-4`}>
           <Text style={tw`text-2xl font-bold text-slate-800`}>Histórico</Text>
           <Pressable
             onPress={handleGeneratePdf}
             disabled={isGeneratingPdf || filteredMeasurements.length === 0}
-            style={({ pressed }) => tw.style(
-              `flex-row items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-500`,
-              pressed && `bg-blue-50`,
+            style={({ pressed }) => [
+              tw`flex-row items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-500`,
+              pressed && tw`bg-blue-50`,
               (isGeneratingPdf || filteredMeasurements.length === 0) &&
-                `opacity-50 border-slate-300`,
-            )}
+                tw`opacity-50 border-slate-300`,
+            ]}
           >
             {isGeneratingPdf ? (
-              <ActivityIndicator size="small" color={tw.color("blue-600")} />
+              <ActivityIndicator size="small" color={(tw.color("blue-600") as string)} />
             ) : (
-              <Feather name="share" size={16} color={tw.color("blue-600")} />
+              <Feather name="share" size={16} color={(tw.color("blue-600") as string)} />
             )}
             <Text
-              style={tw.style(
-                `font-semibold text-blue-600`,
-                (isGeneratingPdf || filteredMeasurements.length === 0) && `text-slate-400`,
-              )}
+              style={[
+                tw`font-semibold text-blue-600`,
+                (isGeneratingPdf || filteredMeasurements.length === 0) && tw`text-slate-400`,
+              ]}
             >
               Gerar PDF
             </Text>
           </Pressable>
         </View>
 
-        {/* Filtros */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={tw`pb-1`}>
           {filterOptions.map((opt) => (
             <Pressable
               key={opt.value}
               onPress={() => setActiveFilter(opt.value)}
-              style={tw.style(
-                `px-4 py-2 rounded-full border mr-2`, // Adiciona margem direita
+              style={[
+                tw`px-4 py-2 rounded-full border mr-2`,
                 activeFilter === opt.value
-                  ? `${opt.color.split(' ')[0]} border-transparent` // Cor de fundo ativa
-                  : `bg-white border-slate-300` // Cor inativa
-              )}
+                  ? tw`${opt.color.split(' ')[0]} border-transparent`
+                  : tw`bg-white border-slate-300`,
+              ]}
             >
-              <Text style={tw.style(
-                `font-semibold`,
+              <Text style={[
+                tw`font-semibold`,
                 activeFilter === opt.value
-                  ? opt.color.split(' ')[1] // Cor do texto ativa
-                  : `text-slate-600` // Cor do texto inativa
-              )}>
+                  ? tw`${opt.color.split(' ')[1]}`
+                  : tw`text-slate-600`,
+              ]}>
                 {opt.label}
               </Text>
             </Pressable>
@@ -291,24 +269,22 @@ export default function HistoricoScreen() {
         </ScrollView>
       </View>
 
-      {/* Lista */}
       <FlatList
-        data={filteredMeasurements} // Usa dados filtrados
+        data={filteredMeasurements}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         ItemSeparatorComponent={ItemSeparator}
-        ListEmptyComponent={<EmptyList filterActive={activeFilter !== 'todos'} />} // Passa info se filtro está ativo
+        ListEmptyComponent={<EmptyList filterActive={activeFilter !== 'todos'} />}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            colors={[tw.color("blue-600")!]}
-            tintColor={tw.color("blue-600")}
+            colors={[(tw.color("blue-600") as string)]}
+            tintColor={(tw.color("blue-600") as string)}
           />
         }
         getItemLayout={getItemLayout}
-        contentContainerStyle={tw`p-4`} // Padding around the list container
-        // Props de performance
+        contentContainerStyle={tw`p-4`}
         initialNumToRender={15}
         maxToRenderPerBatch={10}
         windowSize={11}
@@ -317,13 +293,9 @@ export default function HistoricoScreen() {
   )
 }
 
-// StyleSheet para o separador
 const styles = StyleSheet.create({
   separator: {
     height: 1,
-    backgroundColor: tw.color("slate-200"),
-    // Opcional: Margens para indentar o separador
-    // marginLeft: 16,
-    // marginRight: 16,
+    backgroundColor: (tw.color("slate-200") as string),
   },
 })

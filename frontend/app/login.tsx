@@ -147,13 +147,11 @@ export default function LoginScreen() {
           <Pressable
             onPress={handleSubmit(onSubmit)}
             disabled={isSubmitting}
-            style={({ pressed }) =>
-              tw.style(
-                "bg-blue-600 py-4 rounded-2xl shadow-lg shadow-blue-200 flex-row justify-center",
-                pressed && "scale-98 opacity-90",
-                isSubmitting && "bg-blue-400",
-              )
-            }
+            style={({ pressed }) => [
+              tw`bg-blue-600 py-4 rounded-2xl shadow-lg shadow-blue-200 flex-row justify-center`,
+              pressed && tw`opacity-90`,
+              isSubmitting && tw`bg-blue-400`,
+            ]}
           >
             {isSubmitting ? (
               <ActivityIndicator color="white" />

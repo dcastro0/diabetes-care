@@ -55,14 +55,13 @@ export default function HomeScreen() {
   )
 
   // --- ALTERAÇÃO 1: attemptSync não mexe mais com o updateAuthData ---
-  const attemptSync = async () => {
+  const attemptSync = useCallback(async () => {
     if (!authData?.token) return
 
     try {
       const unsyncedMeasurements = await getUnsyncedMeasurements()
       if (unsyncedMeasurements.length > 0) {
         console.log(`(Home) Sincronizando ${unsyncedMeasurements.length} medições...`)
-        // Apenas envia os dados. O backend atualiza os pontos.
         await syncMeasurements(
           authData.token,
           unsyncedMeasurements,
@@ -78,22 +77,16 @@ export default function HomeScreen() {
     } catch (error) {
       console.error("(Home) Falha na sincronização:", error)
     }
-  }
+  }, [authData?.token])
 
-  // --- ALTERAÇÃO 2: onRefresh usa o heartbeat como fonte da verdade ---
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     if (authData?.token) {
-      // 1. Envia as medições pendentes para o backend.
-      // O backend irá recalcular pontos e total_medicoes
       await attemptSync()
 
-      // 2. Envia o heartbeat. O backend irá atualizar o streak
-      // e retornar TODOS os dados frescos (pontos, streak, total_medicoes)
       const heartbeatResponse = await sendHeartbeat(authData.token)
       
       if (heartbeatResponse) {
-        // 3. Atualiza o frontend com a fonte da verdade do backend
         updateAuthData({ 
           streak_count: heartbeatResponse.streak_count,
           pontos: heartbeatResponse.pontos,
@@ -101,9 +94,8 @@ export default function HomeScreen() {
         })
       }
     }
-    // Recarrega os dados locais
     await load()
-  }, [load, authData?.token, updateAuthData])
+  }, [load, authData?.token, updateAuthData, attemptSync])
 
   const lastThree = measurements.slice(0, 3)
   const ultimaMedicao = measurements.length > 0 ? measurements[0] : null

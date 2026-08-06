@@ -66,6 +66,7 @@ export default function AccountScreen() {
                 {authData.nome}
               </Text>
               <Text style={tw`text-base text-slate-500`}>{authData.email}</Text>
+              <Text style={tw`text-xs text-slate-400 mt-1`}>Membro desde {membroDesde}</Text>
             </View>
           </View>
           <View style={tw`border-t border-slate-100 mt-6 pt-4 flex-row justify-around`}>

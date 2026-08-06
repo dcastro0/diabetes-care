@@ -1,8 +1,8 @@
+import { useAchievementsQuery } from "@/hooks/useAchievementsQuery"
 import { useAuth } from "@/hooks/useAuth"
-import { Achievement, getAchievements } from "@/services/achievementsServices"
+import { Achievement } from "@/services/achievementsServices"
 import { Feather } from "@expo/vector-icons"
-import { useFocusEffect } from "expo-router"
-import React, { useCallback, useState } from "react"
+import React from "react"
 import {
     ActivityIndicator,
     FlatList,
@@ -11,30 +11,30 @@ import {
     Text,
     View,
 } from "react-native"
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context'
 import tw from "twrnc"
 
 const getIconColor = (unlocked: boolean) => {
-    return unlocked ? tw.style("bg-blue-500") : tw.style("bg-slate-300")
+    return unlocked ? tw`bg-blue-500` : tw`bg-slate-300`
 }
 
 const AchievementCard = ({ item }: { item: Achievement }) => (
     <View
-        style={tw.style(
-            `w-[48%] bg-white p-4 rounded-3xl mb-4 shadow-md shadow-slate-200`,
-            !item.unlocked && `opacity-60`,
-        )}
+        style={[
+            tw`w-[48%] bg-white p-4 rounded-3xl mb-4 shadow-md shadow-slate-200`,
+            !item.unlocked && tw`opacity-60`,
+        ]}
     >
         <View
-            style={tw.style(
-                `p-3 self-start rounded-full mb-3`,
+            style={[
+                tw`p-3 self-start rounded-full mb-3`,
                 getIconColor(item.unlocked),
-            )}
+            ]}
         >
             <Feather
                 name={(item.icon || "award") as any}
                 size={24}
-                color={item.unlocked ? "white" : tw.color("slate-500")}
+                color={item.unlocked ? "white" : (tw.color("slate-500") as string)}
             />
         </View>
 
@@ -48,9 +48,10 @@ const AchievementCard = ({ item }: { item: Achievement }) => (
                 </Text>
                 <View style={tw`bg-slate-200 rounded-full h-2 w-full`}>
                     <View
-                        style={tw.style(`bg-slate-400 rounded-full h-2`, {
-                            width: `${item.goal ? (item.progress / item.goal) * 100 : 0}%`,
-                        })}
+                        style={[
+                            tw`bg-slate-400 rounded-full h-2`,
+                            { width: `${item.goal ? (item.progress / item.goal) * 100 : 0}%` },
+                        ]}
                     />
                 </View>
             </View>
@@ -62,41 +63,7 @@ const AchievementCard = ({ item }: { item: Achievement }) => (
 
 export default function AchievementsScreen() {
     const { authData } = useAuth()
-    const [achievements, setAchievements] = useState<Achievement[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [isRefreshing, setIsRefreshing] = useState(false)
-
-    const fetchData = useCallback(async () => {
-        if (!authData?.token) {
-            setError("Usuário não autenticado.")
-            setIsLoading(false)
-            return
-        }
-
-        setError(null)
-        try {
-            const data = await getAchievements(authData.token)
-            setAchievements(data)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Erro desconhecido")
-        } finally {
-            setIsLoading(false)
-            setIsRefreshing(false)
-        }
-    }, [authData?.token])
-
-    useFocusEffect(
-        useCallback(() => {
-            setIsLoading(true)
-            fetchData()
-        }, [fetchData]),
-    )
-
-    const onRefresh = () => {
-        setIsRefreshing(true)
-        fetchData()
-    }
+    const { data: achievements = [], isLoading, error, refetch, isRefetching } = useAchievementsQuery(authData?.token)
 
     const ListHeader = (
         <View style={tw`mb-8 mt-8 pt-4`}>
@@ -106,10 +73,10 @@ export default function AchievementsScreen() {
         </View>
     )
 
-    if (isLoading && !isRefreshing) {
+    if (isLoading && !isRefetching) {
         return (
             <View style={tw`flex-1 justify-center items-center bg-slate-50`}>
-                <ActivityIndicator size="large" color={tw.color("blue-500")} />
+                <ActivityIndicator size="large" color={tw.color("blue-500") as string} />
                 <Text style={tw`mt-4 text-slate-500`}>Carregando conquistas...</Text>
             </View>
         )
@@ -118,9 +85,11 @@ export default function AchievementsScreen() {
     if (error) {
         return (
             <View style={tw`flex-1 justify-center items-center bg-slate-50 p-6`}>
-                <Text style={tw`text-lg text-red-500 mb-4 text-center`}>{error}</Text>
+                <Text style={tw`text-lg text-red-500 mb-4 text-center`}>
+                    {error instanceof Error ? error.message : "Erro ao carregar conquistas"}
+                </Text>
                 <Pressable
-                    onPress={fetchData}
+                    onPress={() => refetch()}
                     style={tw`bg-blue-500 px-6 py-3 rounded-full`}
                 >
                     <Text style={tw`text-white font-bold`}>Tentar Novamente</Text>
@@ -141,10 +110,10 @@ export default function AchievementsScreen() {
                 columnWrapperStyle={tw`justify-between`}
                 refreshControl={
                     <RefreshControl
-                        refreshing={isRefreshing}
-                        onRefresh={onRefresh}
+                        refreshing={isRefetching}
+                        onRefresh={refetch}
                         colors={[tw.color("blue-500") as string]}
-                        tintColor={tw.color("blue-500")}
+                        tintColor={tw.color("blue-500") as string}
                     />
                 }
                 ListEmptyComponent={

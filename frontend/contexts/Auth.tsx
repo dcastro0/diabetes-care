@@ -3,7 +3,7 @@ import { AuthData } from "@/interfaces/AuthData"
 import { AuthProviderProps } from "@/interfaces/AuthProviderProps"
 import { authService } from "@/services/authServices"
 import { sendHeartbeat, trySendPendingHeartbeat } from "@/services/heartbeat"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { deleteSecureItem, getSecureItem, setSecureItem } from "@/services/secureStore"
 import React, {
     createContext,
     useCallback,
@@ -21,15 +21,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     async function loadAuthDataFromStorage() {
       try {
-        const auth = await AsyncStorage.getItem("@AuthData")
+        const auth = await getSecureItem("@AuthData")
         if (auth) {
           const parsed = JSON.parse(auth)
           setAuthData(parsed)
           if (parsed?.token) {
-            // Atualiza o streak ao carregar o app, se necessário
             const hbResponse = await trySendPendingHeartbeat(parsed.token)
             if (hbResponse) {
-              // Se o heartbeat rodou, atualiza o authData
               setAuthData((prevData) => ({
                 ...prevData!,
                 streak_count: hbResponse.streak_count,
@@ -38,7 +36,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error("Falha ao carregar dados de autenticação:", error)
+        console.error("Falha ao carregar dados de autenticação seguros:", error)
       } finally {
         setLoading(false)
       }
@@ -50,14 +48,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     async (data: SignInProp): Promise<AuthData> => {
       const auth = await authService.signIn(data)
       if (auth && Object.keys(auth).length > 0) {
-        // Envia o heartbeat e já pega o streak_count atualizado
         const hbResponse = await sendHeartbeat(auth.token)
         if (hbResponse) {
           auth.streak_count = hbResponse.streak_count
         }
 
         setAuthData(auth)
-        await AsyncStorage.setItem("@AuthData", JSON.stringify(auth))
+        await setSecureItem("@AuthData", JSON.stringify(auth))
         return auth
       } else {
         throw new Error(
@@ -70,20 +67,18 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = useCallback(async (): Promise<void> => {
     setAuthData(undefined)
-    await AsyncStorage.removeItem("@AuthData")
+    await deleteSecureItem("@AuthData")
   }, [])
 
-  // 1. ADICIONADO: Função para atualizar o authData (streak/pontos)
   const updateAuthData = useCallback(async (newData: Partial<AuthData>) => {
     setAuthData((currentData) => {
       if (!currentData) return undefined
 
       const updatedData = { ...currentData, ...newData }
 
-      // Salva a atualização no AsyncStorage
-      AsyncStorage.setItem("@AuthData", JSON.stringify(updatedData)).catch(
+      setSecureItem("@AuthData", JSON.stringify(updatedData)).catch(
         (err) => {
-          console.error("Falha ao salvar authData atualizado:", err)
+          console.error("Falha ao salvar authData atualizado com segurança:", err)
         },
       )
       
@@ -97,9 +92,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       loading,
       signIn,
       signOut,
-      updateAuthData, // 2. Adiciona a função ao contexto
+      updateAuthData,
     }),
-    [authData, loading, signIn, signOut, updateAuthData], // 3. Adiciona às dependências
+    [authData, loading, signIn, signOut, updateAuthData],
   )
 
   return (
