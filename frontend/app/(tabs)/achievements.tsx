@@ -66,9 +66,12 @@ export default function AchievementsScreen() {
     const { data: achievements = [], isLoading, error, refetch, isRefetching } = useAchievementsQuery(authData?.token)
 
     const ListHeader = (
-        <View style={tw`mb-8 mt-8 pt-4`}>
-            <Text style={tw`text-3xl font-bold text-slate-800 text-center`}>
-                🏆 Minhas Conquistas
+        <View style={tw`mb-6 mt-4`}>
+            <Text style={tw`text-xs font-semibold text-slate-400 uppercase tracking-wider text-center`}>
+                Metas & Recompensas
+            </Text>
+            <Text style={tw`text-2xl font-bold text-slate-800 text-center`}>
+                Conquistas
             </Text>
         </View>
     )

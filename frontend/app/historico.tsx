@@ -1,5 +1,12 @@
-// app/historico.tsx
-
+import { GlucoseBadge } from "@/components/ui/GlucoseBadge"
+import {
+  deleteMeasurement,
+  getMeasurements,
+  initMeasurementTable,
+  Measurement,
+} from "@/services/orm/entities/measurement"
+import { generateHistoryPdf } from "@/services/pdfService"
+import { getGlucoseLevelInfo, GlucoseLevel } from "@/utils/glucoseLevels"
 import { Feather } from "@expo/vector-icons"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import {
@@ -9,23 +16,13 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
-import {
-  deleteMeasurement,
-  getMeasurements,
-  initMeasurementTable,
-  Measurement,
-} from "@/services/orm/entities/measurement"
-import { generateHistoryPdf } from "@/services/pdfService"
-import { getGlucoseLevelInfo, GlucoseLevel } from "@/utils/glucoseLevels"
-
-const ITEM_HEIGHT = 72
+const ITEM_HEIGHT = 76
 
 interface ItemRowProps {
   item: Measurement
@@ -33,8 +30,6 @@ interface ItemRowProps {
 }
 
 const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete }) => {
-  const levelInfo = getGlucoseLevelInfo(item.value)
-
   const formattedDate = item.date
     ? new Date(item.date).toLocaleString("pt-BR", {
         day: "2-digit",
@@ -51,36 +46,32 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete }) => {
   }
 
   return (
-    <View
-      style={tw`flex-row items-center justify-between px-4 py-3 h-[${ITEM_HEIGHT}px]`}
-    >
+    <View style={tw`flex-row items-center justify-between px-4 py-3 bg-white rounded-2xl mb-2.5 border border-slate-100 shadow-sm`}>
       <View style={tw`flex-row items-center gap-3 flex-1 mr-2`}>
-        <View style={[tw`p-2 rounded-full`, tw`${levelInfo.bgColorClass}`]}>
-          <Feather name="droplet" size={18} color={(tw.color(levelInfo.colorClass.replace('text-', '')) as string) || "blue"} />
+        <View style={tw`bg-slate-100 p-2.5 rounded-2xl`}>
+          <Feather name="droplet" size={16} color={(tw.color("slate-600") as string)} />
         </View>
         <View style={tw`flex-1`}>
-          <Text style={[tw`text-lg font-semibold`, tw`${levelInfo.colorClass}`]}>
-            {item.value} mg/dL
-          </Text>
-          <Text style={tw`text-sm text-slate-500`} numberOfLines={1}>
-            {formattedDate}
-          </Text>
-          {item.note && (
-            <Text style={tw`text-xs text-slate-400 mt-0.5`} numberOfLines={1}>
-              {item.note}
+          <View style={tw`flex-row items-center gap-2 mb-0.5`}>
+            <Text style={tw`text-base font-bold text-slate-800`}>
+              {item.value} mg/dL
             </Text>
-          )}
+            <GlucoseBadge value={item.value} size="sm" />
+          </View>
+          <Text style={tw`text-xs text-slate-400`} numberOfLines={1}>
+            {formattedDate} {item.note ? `• ${item.note}` : ""}
+          </Text>
         </View>
       </View>
       <Pressable
         onPress={handleDeletePress}
         style={({ pressed }) => [
-          tw`p-2 rounded-full`,
-          pressed && tw`bg-red-100`,
+          tw`p-2 rounded-xl`,
+          pressed && tw`bg-red-50`,
         ]}
-        hitSlop={10}
+        hitSlop={8}
       >
-        <Feather name="trash-2" size={20} color={(tw.color("red-500") as string)} />
+        <Feather name="trash-2" size={18} color={(tw.color("red-500") as string)} />
       </Pressable>
     </View>
   )
@@ -88,15 +79,20 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete }) => {
 
 const MemoizedItemRow = React.memo(ItemRow)
 
-const ItemSeparator = () => <View style={styles.separator} />
-
 const EmptyList = ({ filterActive }: { filterActive: boolean }) => (
   <View style={tw`items-center justify-center py-16 px-4`}>
-    <Feather name="info" size={40} color={(tw.color("slate-400") as string)} />
-    <Text style={tw`mt-4 text-lg text-slate-500 text-center`}>
+    <View style={tw`bg-slate-100 p-4 rounded-full mb-3`}>
+      <Feather name="file-text" size={32} color={(tw.color("slate-400") as string)} />
+    </View>
+    <Text style={tw`text-base font-bold text-slate-700 text-center`}>
       {filterActive
-        ? "Nenhuma medição encontrada para este filtro."
-        : "Nenhuma medição registrada ainda."}
+        ? "Nenhum registro com este filtro"
+        : "Nenhuma medição cadastrada"}
+    </Text>
+    <Text style={tw`text-xs text-slate-400 text-center mt-1`}>
+      {filterActive
+        ? "Tente selecionar outra categoria de glicemia."
+        : "As medições salvas serão listadas aqui."}
     </Text>
   </View>
 )
@@ -139,7 +135,7 @@ export default function HistoricoScreen() {
     (idToDelete: number) => {
       Alert.alert(
         "Confirmar Exclusão",
-        "Tem certeza que deseja remover este registro?",
+        "Tem certeza que deseja remover este registro do histórico?",
         [
           { text: "Cancelar", style: "cancel" },
           {
@@ -214,54 +210,63 @@ export default function HistoricoScreen() {
   }
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-slate-100`}>
-      <View style={tw`p-4 bg-white border-b border-slate-200 shadow-sm`}>
-        <View style={tw`flex-row justify-between items-center mb-4`}>
-          <Text style={tw`text-2xl font-bold text-slate-800`}>Histórico</Text>
+    <SafeAreaView style={tw`flex-1 bg-slate-50`}>
+      {/* Cabeçalho */}
+      <View style={tw`p-4 bg-white border-b border-slate-200/80 shadow-sm`}>
+        <View style={tw`flex-row justify-between items-center mb-3`}>
+          <View>
+            <Text style={tw`text-xs font-semibold text-slate-400 uppercase tracking-wider`}>
+              Relatório Clínico
+            </Text>
+            <Text style={tw`text-2xl font-bold text-slate-800`}>Histórico</Text>
+          </View>
           <Pressable
             onPress={handleGeneratePdf}
             disabled={isGeneratingPdf || filteredMeasurements.length === 0}
             style={({ pressed }) => [
-              tw`flex-row items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-500`,
-              pressed && tw`bg-blue-50`,
+              tw`flex-row items-center gap-2 px-3.5 py-2 rounded-2xl border border-blue-500 bg-blue-50`,
+              pressed && tw`bg-blue-100`,
               (isGeneratingPdf || filteredMeasurements.length === 0) &&
-                tw`opacity-50 border-slate-300`,
+                tw`opacity-50 border-slate-200 bg-slate-50`,
             ]}
           >
             {isGeneratingPdf ? (
               <ActivityIndicator size="small" color={(tw.color("blue-600") as string)} />
             ) : (
-              <Feather name="share" size={16} color={(tw.color("blue-600") as string)} />
+              <Feather name="file-text" size={16} color={(tw.color("blue-600") as string)} />
             )}
             <Text
               style={[
-                tw`font-semibold text-blue-600`,
+                tw`font-bold text-xs text-blue-600`,
                 (isGeneratingPdf || filteredMeasurements.length === 0) && tw`text-slate-400`,
               ]}
             >
-              Gerar PDF
+              Exportar PDF
             </Text>
           </Pressable>
         </View>
 
+        {/* Filtros de Categoria */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={tw`pb-1`}>
           {filterOptions.map((opt) => (
             <Pressable
               key={opt.value}
               onPress={() => setActiveFilter(opt.value)}
               style={[
-                tw`px-4 py-2 rounded-full border mr-2`,
+                tw`px-3.5 py-1.5 rounded-full border mr-2`,
                 activeFilter === opt.value
-                  ? tw`${opt.color.split(' ')[0]} border-transparent`
-                  : tw`bg-white border-slate-300`,
+                  ? tw`${opt.color.split(" ")[0]} border-transparent`
+                  : tw`bg-white border-slate-200`,
               ]}
             >
-              <Text style={[
-                tw`font-semibold`,
-                activeFilter === opt.value
-                  ? tw`${opt.color.split(' ')[1]}`
-                  : tw`text-slate-600`,
-              ]}>
+              <Text
+                style={[
+                  tw`text-xs font-bold`,
+                  activeFilter === opt.value
+                    ? tw`${opt.color.split(" ")[1]}`
+                    : tw`text-slate-500`,
+                ]}
+              >
                 {opt.label}
               </Text>
             </Pressable>
@@ -269,12 +274,12 @@ export default function HistoricoScreen() {
         </ScrollView>
       </View>
 
+      {/* Lista de Registros */}
       <FlatList
         data={filteredMeasurements}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        ItemSeparatorComponent={ItemSeparator}
-        ListEmptyComponent={<EmptyList filterActive={activeFilter !== 'todos'} />}
+        ListEmptyComponent={<EmptyList filterActive={activeFilter !== "todos"} />}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -292,10 +297,3 @@ export default function HistoricoScreen() {
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  separator: {
-    height: 1,
-    backgroundColor: (tw.color("slate-200") as string),
-  },
-})
