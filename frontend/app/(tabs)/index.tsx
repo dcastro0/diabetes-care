@@ -12,7 +12,7 @@ import {
 } from "@/services/orm/entities/measurement";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -89,6 +89,15 @@ export default function HomeScreen() {
   const lastThree = measurements.slice(0, 3);
   const ultimaMedicao = measurements.length > 0 ? measurements[0] : null;
 
+  const statusBiologico = useMemo(() => {
+    if (!ultimaMedicao) return { text: "Sem leituras hoje", color: "text-slate-400", bg: "bg-slate-100" };
+    const val = ultimaMedicao.value;
+    if (val < 70) return { text: "Hipoglicemia Detectada", color: "text-red-600", bg: "bg-red-50" };
+    if (val <= 140) return { text: "Glicemia na Faixa Alvo", color: "text-emerald-600", bg: "bg-emerald-50" };
+    if (val <= 180) return { text: "Glicemia Ligeiramente Elevada", color: "text-amber-600", bg: "bg-amber-50" };
+    return { text: "Hiperglicemia Detectada", color: "text-purple-600", bg: "bg-purple-50" };
+  }, [ultimaMedicao]);
+
   return (
     <SafeAreaView style={tw`flex-1 bg-slate-50`}>
       <ScrollView
@@ -106,15 +115,15 @@ export default function HomeScreen() {
         {/* Cabeçalho */}
         <View style={tw`flex-row justify-between items-center mb-6 mt-2`}>
           <View>
-            <Text style={tw`text-sm font-semibold text-slate-400 uppercase tracking-wider`}>
-              Painel Clínico
+            <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
+              Painel de Saúde
             </Text>
             <Text style={tw`text-2xl font-bold text-slate-800`}>
               {nome}
             </Text>
           </View>
 
-          {/* Badge de Sequência Clínica */}
+          {/* Badge de Acompanhamento */}
           <View style={tw`flex-row items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200`}>
             <Feather name="shield" size={14} color={(tw.color("blue-600") as string)} />
             <Text style={tw`text-xs font-bold text-blue-700`}>
@@ -123,17 +132,20 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Card Principal - Controle Diário */}
-        <View style={tw`bg-slate-900 rounded-3xl p-6 shadow-xl mb-6`}>
-          <View style={tw`flex-row items-start justify-between mb-4`}>
+        {/* Card Principal - Visor Digital de Glicemia */}
+        <View style={tw`bg-slate-900 rounded-3xl p-6 shadow-xl mb-4 border border-slate-800`}>
+          <View style={tw`flex-row items-center justify-between mb-4 border-b border-slate-800 pb-3`}>
             <View>
-              <Text style={tw`text-lg font-bold text-white`}>Controle Diário</Text>
+              <Text style={tw`text-base font-bold text-white`}>Controle Diário</Text>
               <Text style={tw`text-slate-400 text-xs mt-0.5`}>Monitoramento Contínuo</Text>
+            </View>
+            <View style={tw`bg-blue-500/20 px-3 py-1 rounded-full border border-blue-400/30`}>
+              <Text style={tw`text-[10px] font-bold text-blue-300 uppercase tracking-wider`}>Ao Vivo</Text>
             </View>
           </View>
 
-          <Text style={tw`text-slate-400 text-xs uppercase tracking-wider mb-2`}>
-            Última Medição
+          <Text style={tw`text-slate-400 text-xs font-bold uppercase tracking-wider mb-2`}>
+            Última Leitura
           </Text>
 
           {loading && !refreshing ? (
@@ -143,10 +155,10 @@ export default function HomeScreen() {
           ) : ultimaMedicao ? (
             <View style={tw`mb-6`}>
               <View style={tw`flex-row items-baseline gap-2 mb-2`}>
-                <Text style={tw`text-white text-4xl font-black`}>
+                <Text style={tw`text-white text-5xl font-black`}>
                   {ultimaMedicao.value}
                 </Text>
-                <Text style={tw`text-slate-400 text-base font-semibold`}>mg/dL</Text>
+                <Text style={tw`text-slate-400 text-lg font-bold`}>mg/dL</Text>
               </View>
 
               <View style={tw`flex-row items-center justify-between`}>
@@ -164,14 +176,14 @@ export default function HomeScreen() {
           ) : (
             <View style={tw`mb-6`}>
               <Text style={tw`text-white text-xl font-semibold mb-1`}>Nenhum registro hoje</Text>
-              <Text style={tw`text-slate-400 text-xs`}>Registre sua medição para manter o histórico atualizado.</Text>
+              <Text style={tw`text-slate-400 text-xs`}>Registre sua medição para atualizar seu painel clínico.</Text>
             </View>
           )}
 
           <Pressable
             onPress={() => router.push("/(tabs)/medir")}
             style={({ pressed }) => [
-              tw`bg-blue-600 py-3.5 rounded-2xl flex-row items-center justify-center gap-2`,
+              tw`bg-blue-600 py-3.5 rounded-2xl flex-row items-center justify-center gap-2 shadow-sm`,
               pressed && tw`bg-blue-700 opacity-90`,
             ]}
           >
@@ -182,15 +194,33 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
+        {/* Card de Status Biológico Instantâneo */}
+        <View style={tw`bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm mb-6 flex-row items-center justify-between`}>
+          <View style={tw`flex-row items-center gap-3`}>
+            <View style={tw`${statusBiologico.bg} p-2.5 rounded-2xl`}>
+              <Feather name="activity" size={18} color={(tw.color("blue-600") as string)} />
+            </View>
+            <View>
+              <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider`}>
+                Status Biológico
+              </Text>
+              <Text style={tw`text-sm font-bold ${statusBiologico.color}`}>
+                {statusBiologico.text}
+              </Text>
+            </View>
+          </View>
+          <Feather name="chevron-right" size={18} color={(tw.color("slate-400") as string)} />
+        </View>
+
         {/* Módulo 1: Card de Tendência Clínica e Estatísticas eA1c / TIR */}
         <GlucoseChartCard measurements={measurements} />
 
         {/* Histórico Recente */}
-        <View>
+        <View style={tw`mt-2`}>
           <View style={tw`flex-row justify-between items-center mb-3`}>
             <Text style={tw`text-base font-bold text-slate-800`}>Histórico Recente</Text>
             <Pressable onPress={() => router.push("/historico")}>
-              <Text style={tw`text-xs font-bold text-blue-600`}>Ver tudo</Text>
+              <Text style={tw`text-xs font-bold text-blue-600`}>Ver completo</Text>
             </Pressable>
           </View>
 

@@ -16,6 +16,7 @@ import {
   Alert,
   Modal,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -26,19 +27,25 @@ import tw from "twrnc";
 export default function MedirScreen() {
   const router = useRouter();
   const { authData } = useAuth();
-  const [valor, setValor] = useState("");
-  const [tagSelecionada, setTagSelecionada] = useState<string | null>(null);
+  const [valor, setValor] = useState("100");
+  const [tagSelecionada, setTagSelecionada] = useState<string | null>("Em jejum");
   const [modalVisivel, setModalVisivel] = useState(false);
   const [saving, setSaving] = useState(false);
   const [unlockedReward, setUnlockedReward] = useState<Achievement | null>(null);
 
-  const tags = ["Em jejum", "Pós-refeição", "Ao acordar", "Exercício"];
+  const tags = ["Em jejum", "Pós-refeição", "Ao acordar", "Antes de dormir", "Exercício"];
 
   const numValor = useMemo(() => {
     const raw = valor.trim().replace(",", ".");
     const parsed = parseFloat(raw);
     return Number.isNaN(parsed) ? null : parsed;
   }, [valor]);
+
+  const handleStep = (delta: number) => {
+    const current = numValor ?? 100;
+    const next = Math.max(20, Math.min(600, current + delta));
+    setValor(next.toString());
+  };
 
   const attemptSync = async () => {
     if (!authData?.token) return null;
@@ -90,71 +97,100 @@ export default function MedirScreen() {
 
   const handleFecharModal = () => {
     setModalVisivel(false);
-    setValor("");
-    setTagSelecionada(null);
+    setValor("100");
+    setTagSelecionada("Em jejum");
     router.push("/");
   };
 
   return (
     <SafeAreaView style={tw`flex-1 bg-slate-50`}>
-      <View style={tw`flex-1 p-6`}>
-        {/* Cabeçalho */}
-        <View style={tw`mb-6 mt-2 items-center`}>
-          <Text style={tw`text-sm font-semibold text-slate-400 uppercase tracking-wider`}>
-            Novo Registro
-          </Text>
-          <Text style={tw`text-2xl font-bold text-slate-800`}>
-            Nível de Glicemia
-          </Text>
-        </View>
-
-        {/* Card do Input com Feedback Instantâneo de Status */}
-        <View style={tw`bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm mb-6 items-center`}>
-          <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider mb-4`}>
-            Valor Medido (mg/dL)
-          </Text>
-
-          <View style={tw`flex-row items-baseline mb-4 justify-center`}>
-            <TextInput
-              style={tw`text-5xl font-black text-slate-900 text-center min-w-[120px]`}
-              placeholder="105"
-              placeholderTextColor={(tw.color("slate-300") as string)}
-              keyboardType="numeric"
-              value={valor}
-              onChangeText={setValor}
-              autoFocus={true}
-            />
-            <Text style={tw`text-lg font-bold text-slate-400 ml-2`}>mg/dL</Text>
+      <ScrollView contentContainerStyle={tw`p-6 flex-grow justify-between`}>
+        <View>
+          {/* Cabeçalho */}
+          <View style={tw`mb-6 items-center`}>
+            <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
+              Novo Registro Clínico
+            </Text>
+            <Text style={tw`text-2xl font-bold text-slate-800`}>
+              Nível de Glicemia
+            </Text>
           </View>
 
-          {numValor !== null ? (
-            <GlucoseBadge value={numValor} size="md" />
-          ) : (
-            <Text style={tw`text-xs text-slate-400`}>Digite o valor para ver a classificação</Text>
-          )}
-        </View>
+          {/* Visor Médico Digital (Medical LCD/OLED Display) */}
+          <View style={tw`bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl mb-6 items-center`}>
+            <View style={tw`flex-row items-center gap-2 mb-3 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700`}>
+              <View style={tw`w-2 h-2 rounded-full bg-emerald-400`} />
+              <Text style={tw`text-slate-300 text-xs font-semibold uppercase tracking-wider`}>
+                Visor Digital de Glicemia
+              </Text>
+            </View>
 
-        {/* Contexto da Medição */}
-        <View style={tw`mb-6`}>
-          <Text style={tw`text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider`}>
-            Momento da Leitura
-          </Text>
-          <View style={tw`flex-row flex-wrap`}>
-            {tags.map((tag) => (
-              <ContextChip
-                key={tag}
-                label={tag}
-                selected={tagSelecionada === tag}
-                onPress={() =>
-                  setTagSelecionada(tagSelecionada === tag ? null : tag)
-                }
+            {/* Input Central com Grande Tipografia */}
+            <View style={tw`flex-row items-baseline my-2 justify-center`}>
+              <TextInput
+                style={tw`text-6xl font-black text-white text-center min-w-[140px]`}
+                placeholder="100"
+                placeholderTextColor={(tw.color("slate-600") as string)}
+                keyboardType="numeric"
+                value={valor}
+                onChangeText={setValor}
               />
-            ))}
+              <Text style={tw`text-lg font-bold text-slate-400 ml-2`}>mg/dL</Text>
+            </View>
+
+            {/* Classificação com Badge */}
+            <View style={tw`mt-2 mb-4`}>
+              {numValor !== null ? (
+                <GlucoseBadge value={numValor} size="md" />
+              ) : (
+                <Text style={tw`text-xs text-slate-500`}>Digite o valor para visualizar o status</Text>
+              )}
+            </View>
+
+            {/* Botões Rápidos de Incremento com o Polegar */}
+            <View style={tw`flex-row justify-between w-full pt-4 border-t border-slate-800 gap-2`}>
+              {[
+                { label: "-10", val: -10 },
+                { label: "-5", val: -5 },
+                { label: "+5", val: 5 },
+                { label: "+10", val: 10 },
+              ].map((item) => (
+                <Pressable
+                  key={item.label}
+                  onPress={() => handleStep(item.val)}
+                  style={({ pressed }) => [
+                    tw`flex-1 bg-slate-800/90 py-2.5 rounded-xl items-center border border-slate-700`,
+                    pressed && tw`bg-slate-700`,
+                  ]}
+                >
+                  <Text style={tw`text-white font-bold text-sm`}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Contexto da Medição */}
+          <View style={tw`mb-6`}>
+            <Text style={tw`text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider`}>
+              Momento do Registro
+            </Text>
+            <View style={tw`flex-row flex-wrap gap-2`}>
+              {tags.map((tag) => (
+                <ContextChip
+                  key={tag}
+                  label={tag}
+                  selected={tagSelecionada === tag}
+                  onPress={() =>
+                    setTagSelecionada(tagSelecionada === tag ? null : tag)
+                  }
+                />
+              ))}
+            </View>
           </View>
         </View>
 
-        {/* Botão Principal */}
-        <View style={tw`mt-auto`}>
+        {/* Botão de Gravação */}
+        <View style={tw`pt-4 mb-2`}>
           <Pressable
             onPress={handleSalvar}
             disabled={!valor.trim() || saving}
@@ -170,15 +206,15 @@ export default function MedirScreen() {
               <>
                 <Feather name="check-circle" size={20} color="white" />
                 <Text style={tw`text-white text-center text-base font-bold`}>
-                  Salvar Leitura Clínicas
+                  Salvar Leitura Clínica
                 </Text>
               </>
             )}
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
 
-      {/* Modal de Sucesso sem Emojis */}
+      {/* Modal de Sucesso */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -196,18 +232,15 @@ export default function MedirScreen() {
             </Text>
 
             {unlockedReward ? (
-              <View style={tw`bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 w-full items-center`}>
+              <View style={tw`bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 w-full items-center`}>
                 <View style={tw`flex-row items-center gap-1.5 mb-1`}>
-                  <Feather name="award" size={16} color={(tw.color("amber-600") as string)} />
-                  <Text style={tw`text-xs font-bold text-amber-700 uppercase tracking-wider`}>
-                    Meta Concluída
+                  <Feather name="award" size={16} color={(tw.color("blue-600") as string)} />
+                  <Text style={tw`text-xs font-bold text-blue-700 uppercase tracking-wider`}>
+                    Conquista Clínica Desbloqueada
                   </Text>
                 </View>
                 <Text style={tw`text-base font-bold text-slate-800 text-center`}>
                   {unlockedReward.title}
-                </Text>
-                <Text style={tw`text-xs font-bold text-amber-600 mt-1`}>
-                  +{unlockedReward.points_reward} Pontos
                 </Text>
               </View>
             ) : null}

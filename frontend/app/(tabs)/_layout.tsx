@@ -1,60 +1,80 @@
+import { Feather } from "@expo/vector-icons"
 import { Tabs } from "expo-router"
 import React from "react"
-import { Platform } from "react-native"
-
-import MaterialIcons from "@expo/vector-icons/MaterialIcons"
-import { HapticTab } from "../../components/HapticTab"
-import { IconSymbol } from "../../components/ui/IconSymbol"
-import TabBarBackground from "../../components/ui/TabBarBackground"
+import { Platform, View } from "react-native"
+import tw from "twrnc"
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: "absolute",
-          },
-          default: {},
-        }),
+        tabBarActiveTintColor: tw.color("blue-600") as string,
+        tabBarInactiveTintColor: tw.color("slate-400") as string,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "700",
+          marginBottom: Platform.OS === "ios" ? 0 : 4,
+        },
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 0,
+          elevation: 12,
+          shadowColor: "#0F172A",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          height: Platform.OS === "ios" ? 84 : 64,
+          paddingBottom: Platform.OS === "ios" ? 24 : 8,
+          paddingTop: 8,
+          marginHorizontal: Platform.OS === "ios" ? 16 : 0,
+          marginBottom: Platform.OS === "ios" ? 16 : 0,
+          borderRadius: Platform.OS === "ios" ? 32 : 0,
+          position: Platform.OS === "ios" ? "absolute" : "relative",
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+          title: "Painel",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? tw`bg-blue-50 p-1.5 rounded-full` : null}>
+              <Feather size={20} name="grid" color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="medir"
         options={{
-          title: "Medir Glicemia",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons size={28} name="sort" color={color} />
+          title: "Medir",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? tw`bg-blue-50 p-1.5 rounded-full` : null}>
+              <Feather size={20} name="plus-circle" color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="achievements"
         options={{
-          title: "Recompensas",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons size={28} name="star" color={color} />
+          title: "Conquistas",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? tw`bg-blue-50 p-1.5 rounded-full` : null}>
+              <Feather size={20} name="award" color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
-          title: "Account",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons size={28} name="account-circle" color={color} />
+          title: "Perfil",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? tw`bg-blue-50 p-1.5 rounded-full` : null}>
+              <Feather size={20} name="user" color={color} />
+            </View>
           ),
         }}
       />

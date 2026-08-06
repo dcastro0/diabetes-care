@@ -40,56 +40,84 @@ export default function AccountScreen() {
       <ScrollView contentContainerStyle={tw`p-6`}>
         {/* Cabeçalho */}
         <View style={tw`mb-6 mt-2 items-center`}>
-          <Text style={tw`text-xs font-semibold text-slate-400 uppercase tracking-wider`}>
-            Configurações Clínicas
+          <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-widest`}>
+            Prontuário & Configurações
           </Text>
           <Text style={tw`text-2xl font-bold text-slate-800`}>
-            Minha Conta
+            Perfil do Paciente
           </Text>
         </View>
 
-        {/* Card do Usuário */}
-        <View style={tw`bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm mb-6`}>
+        {/* Cartão de Identificação Médica do Paciente (Medical ID Card) */}
+        <View style={tw`bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl mb-6`}>
+          {/* Header do Cartão de Identificação */}
+          <View style={tw`flex-row justify-between items-center border-b border-slate-800 pb-4 mb-4`}>
+            <View style={tw`flex-row items-center gap-2`}>
+              <View style={tw`bg-blue-500/20 p-2 rounded-xl border border-blue-400/30`}>
+                <Feather name="shield" size={16} color={(tw.color("blue-400") as string)} />
+              </View>
+              <View>
+                <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider`}>
+                  Diabetes Care Medical ID
+                </Text>
+                <Text style={tw`text-xs text-emerald-400 font-semibold`}>Sincronizado</Text>
+              </View>
+            </View>
+            <View style={tw`bg-slate-800 px-3 py-1 rounded-full border border-slate-700`}>
+              <Text style={tw`text-xs font-bold text-slate-300`}>Paciente</Text>
+            </View>
+          </View>
+
+          {/* Dados do Paciente */}
           <View style={tw`flex-row items-center`}>
             {authData.avatar ? (
               <Image
                 source={{ uri: authData.avatar }}
-                style={tw`w-16 h-16 rounded-full`}
+                style={tw`w-16 h-16 rounded-2xl border-2 border-slate-700`}
               />
             ) : (
               <View
-                style={tw`w-16 h-16 rounded-full bg-blue-50 border border-blue-200 items-center justify-center`}
+                style={tw`w-16 h-16 rounded-2xl bg-blue-600 border border-blue-400/40 items-center justify-center`}
               >
-                <Text style={tw`text-2xl font-bold text-blue-600`}>
+                <Text style={tw`text-2xl font-black text-white`}>
                   {authData.nome?.[0] ?? "U"}
                 </Text>
               </View>
             )}
             <View style={tw`ml-4 flex-1`}>
-              <Text style={tw`text-xl font-bold text-slate-800`} numberOfLines={1}>
+              <Text style={tw`text-lg font-bold text-white`} numberOfLines={1}>
                 {authData.nome}
               </Text>
-              <Text style={tw`text-xs font-medium text-slate-500`} numberOfLines={1}>
+              <Text style={tw`text-xs text-slate-400 font-medium`} numberOfLines={1}>
                 {authData.email}
               </Text>
-              <Text style={tw`text-xs text-slate-400 mt-1`}>
-                Membro desde {membroDesde}
-              </Text>
+              <View style={tw`flex-row items-center gap-1 mt-1`}>
+                <Feather name="calendar" size={12} color={(tw.color("slate-500") as string)} />
+                <Text style={tw`text-xs text-slate-400`}>
+                  Cadastrado em {membroDesde}
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Widgets de Métricas */}
-          <View style={tw`border-t border-slate-100 mt-6 pt-4 flex-row justify-around`}>
+          {/* Métricas Clínicas */}
+          <View style={tw`border-t border-slate-800 mt-5 pt-4 flex-row justify-around`}>
             <View style={tw`items-center`}>
-              <Text style={tw`text-lg font-bold text-slate-800`}>
+              <Text style={tw`text-xl font-black text-white`}>
                 {totalMedicoes}
               </Text>
-              <Text style={tw`text-xs font-semibold text-slate-400 uppercase`}>Medições</Text>
+              <Text style={tw`text-xs font-semibold text-slate-400 uppercase tracking-wider`}>
+                Medições
+              </Text>
             </View>
-            <View style={tw`w-[1px] bg-slate-100 h-8 self-center`} />
+            <View style={tw`w-[1px] bg-slate-800 h-8 self-center`} />
             <View style={tw`items-center`}>
-              <Text style={tw`text-lg font-bold text-blue-600`}>{streak}</Text>
-              <Text style={tw`text-xs font-semibold text-slate-400 uppercase`}>Dias Ativos</Text>
+              <Text style={tw`text-xl font-black text-blue-400`}>
+                {streak}
+              </Text>
+              <Text style={tw`text-xs font-semibold text-slate-400 uppercase tracking-wider`}>
+                Dias Ativos
+              </Text>
             </View>
           </View>
         </View>
@@ -107,14 +135,14 @@ export default function AccountScreen() {
               ]}
             >
               <View style={tw`flex-row items-center gap-3.5`}>
-                <View style={tw`bg-slate-100 p-2 rounded-xl`}>
+                <View style={tw`bg-slate-100 p-2.5 rounded-xl`}>
                   <Feather
                     name={option.icon as any}
                     size={18}
-                    color={(tw.color("slate-600") as string)}
+                    color={(tw.color("slate-700") as string)}
                   />
                 </View>
-                <Text style={tw`text-sm font-semibold text-slate-700`}>
+                <Text style={tw`text-sm font-bold text-slate-700`}>
                   {option.label}
                 </Text>
               </View>
@@ -134,10 +162,11 @@ export default function AccountScreen() {
             router.replace("/login")
           }}
           style={({ pressed }) => [
-            tw`bg-white py-3.5 rounded-2xl border border-red-200 shadow-sm`,
+            tw`bg-white py-4 rounded-2xl border border-red-200 shadow-sm flex-row justify-center items-center gap-2`,
             pressed && tw`bg-red-50`,
           ]}
         >
+          <Feather name="log-out" size={16} color={(tw.color("red-600") as string)} />
           <Text style={tw`text-red-600 font-bold text-center text-sm`}>
             Encerrar Sessão
           </Text>
