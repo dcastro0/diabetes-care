@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import React from "react";
 import { Pressable, Text } from "react-native";
 import tw from "twrnc";
@@ -13,6 +14,8 @@ export const ContextChip: React.FC<ContextChipProps> = ({
   selected,
   onPress,
 }) => {
+  const { isDark } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
@@ -20,6 +23,8 @@ export const ContextChip: React.FC<ContextChipProps> = ({
         tw`px-4 py-2.5 rounded-2xl border mr-2.5 mb-2.5`,
         selected
           ? tw`bg-blue-600 border-blue-600 shadow-sm`
+          : isDark
+          ? tw`bg-slate-900 border-slate-800`
           : tw`bg-white border-slate-200`,
         pressed && tw`opacity-80`,
       ]}
@@ -27,7 +32,11 @@ export const ContextChip: React.FC<ContextChipProps> = ({
       <Text
         style={[
           tw`text-sm font-semibold`,
-          selected ? tw`text-white` : tw`text-slate-600`,
+          selected
+            ? tw`text-white`
+            : isDark
+            ? tw`text-slate-300`
+            : tw`text-slate-600`,
         ]}
       >
         {label}

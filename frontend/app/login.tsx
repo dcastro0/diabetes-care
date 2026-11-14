@@ -22,7 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
 export default function LoginScreen() {
-  const { signIn } = useAuth()
+  const { signIn, enterGuestMode } = useAuth()
   const { isDark } = useTheme()
 
   const {
@@ -192,6 +192,23 @@ export default function LoginScreen() {
               <Text style={tw`text-blue-600 font-bold text-sm`}>Cadastre-se</Text>
             </Pressable>
           </View>
+
+          {/* Continuar sem conta */}
+          <Pressable
+            onPress={async () => {
+              await enterGuestMode()
+              router.replace("/(tabs)")
+            }}
+            style={({ pressed }) => [
+              tw`mt-5 py-3.5 rounded-2xl border items-center justify-center`,
+              isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200`,
+              pressed && tw`opacity-80`,
+            ]}
+          >
+            <Text style={[tw`text-xs font-bold`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>
+              Continuar sem conta (Modo Offline)
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

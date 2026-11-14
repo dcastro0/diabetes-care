@@ -1,5 +1,9 @@
 import { GlucoseBadge } from "@/components/ui/GlucoseBadge"
+import { TargetModeBanner } from "@/components/ui/TargetModeBanner"
+import { useGlucoseTarget } from "@/contexts/GlucoseTargetContext"
 import { useTheme } from "@/contexts/ThemeContext"
+import { useAuth } from "@/hooks/useAuth"
+import { deleteMeasurementOnServer } from "@/services/measurementService"
 import {
   deleteMeasurement,
   getMeasurements,
@@ -65,7 +69,9 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, onDelete, isDark }) => {
             <GlucoseBadge value={item.value} size="sm" />
           </View>
           <Text style={tw`text-xs text-slate-400`} numberOfLines={1}>
-            {formattedDate} {item.note ? `• ${item.note}` : ""}
+            {formattedDate}
+            {item.context && item.context !== "geral" ? ` • ${item.context}` : ""}
+            {item.note ? ` • ${item.note}` : ""}
           </Text>
         </View>
       </View>
@@ -105,6 +111,8 @@ const EmptyList = ({ filterActive, isDark }: { filterActive: boolean; isDark: bo
 
 export default function HistoricoScreen() {
   const { isDark } = useTheme()
+  const { authData } = useAuth()
+  const { activeTarget, isViewingCustom } = useGlucoseTarget()
   const [allMeasurements, setAllMeasurements] = useState<Measurement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -150,11 +158,17 @@ export default function HistoricoScreen() {
             style: "destructive",
             onPress: async () => {
               const previousMeasurements = allMeasurements
+              const itemToDelete = allMeasurements.find((m) => m.id === idToDelete)
               setAllMeasurements((current) =>
                 current.filter((m) => m.id !== idToDelete),
               )
               try {
                 await deleteMeasurement(idToDelete)
+                if (authData?.token && itemToDelete?.server_id) {
+                  deleteMeasurementOnServer(authData.token, itemToDelete.server_id).catch(
+                    (err) => console.warn("Falha ao remover medição no servidor:", err),
+                  )
+                }
               } catch (error) {
                 console.error("Erro ao deletar medição:", error)
                 setAllMeasurements(previousMeasurements)
@@ -166,7 +180,7 @@ export default function HistoricoScreen() {
         { cancelable: true },
       )
     },
-    [allMeasurements],
+    [allMeasurements, authData?.token],
   )
 
   const filteredMeasurements = useMemo(() => {
@@ -174,19 +188,19 @@ export default function HistoricoScreen() {
       return allMeasurements
     }
     return allMeasurements.filter(
-      (m) => getGlucoseLevelInfo(m.value).level === activeFilter,
+      (m) => getGlucoseLevelInfo(m.value, activeTarget).level === activeFilter,
     )
-  }, [allMeasurements, activeFilter])
+  }, [allMeasurements, activeFilter, activeTarget])
 
   const handlePreviewPdf = async () => {
     setIsGeneratingPdf(true)
-    await previewHistoryPdf(filteredMeasurements)
+    await previewHistoryPdf(filteredMeasurements, activeTarget, isViewingCustom)
     setIsGeneratingPdf(false)
   }
 
   const handleExportPdf = async () => {
     setIsGeneratingPdf(true)
-    await exportHistoryPdf(filteredMeasurements)
+    await exportHistoryPdf(filteredMeasurements, activeTarget, isViewingCustom)
     setIsGeneratingPdf(false)
   }
 
@@ -277,6 +291,9 @@ export default function HistoricoScreen() {
             </Pressable>
           </View>
         </View>
+
+        {/* Meta Ativa */}
+        <TargetModeBanner compact />
 
         {/* Filtros de Categoria */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={tw`pb-1`}>

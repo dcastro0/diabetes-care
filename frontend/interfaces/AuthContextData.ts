@@ -1,17 +1,15 @@
-import { LoginFormValues } from "@/schema/loginSchema"; // 1. Importa do schema
+import { LoginFormData } from "@/schemas/authSchema";
 import { AuthData } from "./AuthData";
 
-// 2. Remove a interface duplicada 'SignInProp'
-
 interface AuthContextData {
-  authData?: AuthData
-  // 3. Corrige o tipo de retorno para que o Login/Registro funcione
-  signIn: (data: LoginFormValues) => Promise<AuthData>
-  signOut: () => Promise<void>
-  loading: boolean
-  updateAuthData: (newData: Partial<AuthData>) => Promise<void>
+  authData?: AuthData;
+  isGuest: boolean;
+  loading: boolean;
+  signIn: (data: LoginFormData) => Promise<AuthData>;
+  completeAuth: (auth: AuthData) => Promise<AuthData>;
+  enterGuestMode: () => Promise<void>;
+  signOut: () => Promise<void>;
+  updateAuthData: (newData: Partial<AuthData>) => Promise<void>;
 }
 
-// 4. Exporta LoginFormValues como SignInProp (ou apenas usa LoginFormValues)
-export { AuthContextData, AuthData, type LoginFormValues as SignInProp };
-
+export { AuthContextData, AuthData, type LoginFormData as SignInProp };

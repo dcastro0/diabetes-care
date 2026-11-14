@@ -23,7 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import tw from "twrnc"
 
 export default function RegisterScreen() {
-  const { signIn } = useAuth()
+  const { completeAuth, enterGuestMode } = useAuth()
   const { isDark } = useTheme()
 
   const {
@@ -37,12 +37,12 @@ export default function RegisterScreen() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await registerService.signUp(data)
-      await signIn({ email: data.email, password: data.password })
+      const auth = await registerService.signUp(data)
+      await completeAuth(auth)
 
       Alert.alert(
         "Bem-vindo ao Diabetes Care!",
-        "Sua conta foi criada. O Glico está aqui para te acompanhar!",
+        "Sua conta foi criada e suas medições estão protegidas na nuvem!",
       )
       router.replace("/(tabs)")
     } catch (error: any) {
@@ -244,7 +244,7 @@ export default function RegisterScreen() {
           </Pressable>
 
           {/* Link para Login */}
-          <View style={tw`flex-row justify-center mt-6 mb-4`}>
+          <View style={tw`flex-row justify-center mt-6 mb-3`}>
             <Text style={[tw`text-sm font-medium`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
               Já tem uma conta?{" "}
             </Text>
@@ -252,6 +252,22 @@ export default function RegisterScreen() {
               <Text style={tw`text-blue-600 font-bold text-sm`}>Fazer Login</Text>
             </Pressable>
           </View>
+
+          {/* Continuar sem conta */}
+          <Pressable
+            onPress={async () => {
+              await enterGuestMode()
+              router.replace("/(tabs)")
+            }}
+            style={({ pressed }) => [
+              tw`py-3 rounded-2xl items-center justify-center mb-4`,
+              pressed && tw`opacity-70`,
+            ]}
+          >
+            <Text style={tw`text-xs font-bold text-slate-400`}>
+              Continuar sem conta por enquanto
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

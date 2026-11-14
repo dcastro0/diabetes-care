@@ -1,3 +1,4 @@
+import { AccountRecommendationCard } from "@/components/ui/AccountRecommendationCard"
 import { useTheme } from "@/contexts/ThemeContext"
 import { useAchievementsQuery } from "@/hooks/useAchievementsQuery"
 import { useAuth } from "@/hooks/useAuth"
@@ -150,6 +151,26 @@ export default function AchievementsScreen() {
     </View>
   )
 
+  if (!authData?.token) {
+    return (
+      <SafeAreaView style={[tw`flex-1 p-6`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
+        <View style={tw`items-center mb-6 mt-2`}>
+          <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+            Acompanhamento Médico
+          </Text>
+          <Text style={[tw`text-2xl font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
+            Conquistas Clínicas
+          </Text>
+        </View>
+
+        <AccountRecommendationCard
+          title="Desbloqueie suas conquistas"
+          description="As conquistas e a contagem de dias ativos são sincronizadas com a sua conta. Crie uma conta gratuita para acompanhar seu progresso e salvar suas medições na nuvem!"
+        />
+      </SafeAreaView>
+    )
+  }
+
   if (isLoading && !isRefetching) {
     return (
       <SafeAreaView style={[tw`flex-1 justify-center items-center`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
@@ -194,9 +215,14 @@ export default function AchievementsScreen() {
           />
         }
         ListEmptyComponent={
-          <View style={tw`flex-1 justify-center items-center mt-12 p-8 bg-white rounded-3xl border border-slate-200/80`}>
-            <Feather name="award" size={32} color={(tw.color("slate-300") as string)} style={tw`mb-2`} />
-            <Text style={tw`text-sm font-bold text-slate-600`}>Nenhuma conquista registrada</Text>
+          <View
+            style={[
+              tw`flex-1 justify-center items-center mt-12 p-8 rounded-3xl border`,
+              isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+            ]}
+          >
+            <Feather name="award" size={32} color={(tw.color("slate-400") as string)} style={tw`mb-2`} />
+            <Text style={[tw`text-sm font-bold`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>Nenhuma conquista registrada</Text>
           </View>
         }
       />

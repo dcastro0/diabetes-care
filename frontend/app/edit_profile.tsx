@@ -1,6 +1,7 @@
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { EditProfileFormData, editProfileSchema } from "@/schemas/authSchema";
+import { api } from "@/services/api";
 import { Feather } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
@@ -38,6 +39,13 @@ export default function EditarPerfilScreen() {
 
   const onSubmit = async (data: EditProfileFormData) => {
     try {
+      if (authData?.token) {
+        await api.put(
+          "/users/me",
+          { name: data.nome, email: data.email },
+          { headers: { Authorization: `Bearer ${authData.token}` } },
+        );
+      }
       await updateAuthData({
         nome: data.nome,
         email: data.email,

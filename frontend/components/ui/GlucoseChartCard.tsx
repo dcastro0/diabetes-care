@@ -1,3 +1,5 @@
+import { useGlucoseTarget } from "@/contexts/GlucoseTargetContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Measurement } from "@/services/orm/entities/measurement";
 import { getGlucoseLevelInfo } from "@/utils/glucoseLevels";
 import { Feather } from "@expo/vector-icons";
@@ -5,6 +7,7 @@ import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import tw from "twrnc";
 import { StatCard } from "./StatCard";
+import { TargetModeBanner } from "./TargetModeBanner";
 
 interface GlucoseChartCardProps {
   measurements: Measurement[];
@@ -14,6 +17,8 @@ export const GlucoseChartCard: React.FC<GlucoseChartCardProps> = ({
   measurements,
 }) => {
   const [period, setPeriod] = useState<7 | 14 | 30>(7);
+  const { activeTarget } = useGlucoseTarget();
+  const { isDark } = useTheme();
 
   const filteredMeasurements = useMemo(() => {
     const cutoff = new Date();
@@ -41,7 +46,7 @@ export const GlucoseChartCard: React.FC<GlucoseChartCardProps> = ({
     const hba1c = ((avg + 46.7) / 28.7).toFixed(1);
 
     const inRange = filteredMeasurements.filter(
-      (m) => getGlucoseLevelInfo(m.value).level === "bom",
+      (m) => getGlucoseLevelInfo(m.value, activeTarget).level === "bom",
     ).length;
     const tir = Math.round((inRange / filteredMeasurements.length) * 100);
 
@@ -53,7 +58,7 @@ export const GlucoseChartCard: React.FC<GlucoseChartCardProps> = ({
       max: Math.max(...values),
       total: filteredMeasurements.length,
     };
-  }, [filteredMeasurements]);
+  }, [filteredMeasurements, activeTarget]);
 
   // Pegar ate as ultimas 7 medicoes para exibir no visualizador de barras
   const recentBars = useMemo(() => {
@@ -67,34 +72,48 @@ export const GlucoseChartCard: React.FC<GlucoseChartCardProps> = ({
   }, [recentBars]);
 
   return (
-    <View style={tw`bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm mb-6`}>
+    <View
+      style={[
+        tw`rounded-3xl p-6 border shadow-sm mb-6`,
+        isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+      ]}
+    >
       {/* Topo do Card com Seletor de Periodo */}
       <View style={tw`flex-row justify-between items-center mb-4`}>
         <View style={tw`flex-row items-center gap-2`}>
-          <View style={tw`bg-blue-50 p-2 rounded-xl`}>
+          <View style={isDark ? tw`bg-blue-500/20 p-2 rounded-xl` : tw`bg-blue-50 p-2 rounded-xl`}>
             <Feather name="trending-up" size={18} color={(tw.color("blue-600") as string)} />
           </View>
           <View>
-            <Text style={tw`text-base font-bold text-slate-800`}>Tendência Clínica</Text>
+            <Text style={[tw`text-base font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>Tendência Clínica</Text>
             <Text style={tw`text-xs text-slate-400`}>{stats.total} leituras analisadas</Text>
           </View>
         </View>
 
         {/* Chips de Filtro (7d, 14d, 30d) */}
-        <View style={tw`flex-row bg-slate-100 p-1 rounded-full border border-slate-200`}>
+        <View
+          style={[
+            tw`flex-row p-1 rounded-full border`,
+            isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-slate-100 border-slate-200`,
+          ]}
+        >
           {([7, 14, 30] as const).map((p) => (
             <Pressable
               key={p}
               onPress={() => setPeriod(p)}
               style={[
                 tw`px-2.5 py-1 rounded-full`,
-                period === p && tw`bg-white shadow-sm`,
+                period === p && (isDark ? tw`bg-slate-700 shadow-sm` : tw`bg-white shadow-sm`),
               ]}
             >
               <Text
                 style={[
                   tw`text-xs font-bold`,
-                  period === p ? tw`text-blue-600` : tw`text-slate-500`,
+                  period === p
+                    ? isDark
+                      ? tw`text-blue-400`
+                      : tw`text-blue-600`
+                    : tw`text-slate-400`,
                 ]}
               >
                 {p}d
@@ -105,7 +124,14 @@ export const GlucoseChartCard: React.FC<GlucoseChartCardProps> = ({
       </View>
 
       {/* Visualizacao das Barras de Leitura */}
-      <View style={tw`h-36 bg-slate-50 rounded-2xl p-4 mb-4 justify-end border border-slate-100`}>
+      <TargetModeBanner compact />
+
+      <View
+        style={[
+          tw`h-36 rounded-2xl p-4 mb-4 justify-end border`,
+          isDark ? tw`bg-slate-800/70 border-slate-800` : tw`bg-slate-50 border-slate-100`,
+        ]}
+      >
         {recentBars.length === 0 ? (
           <View style={tw`flex-1 items-center justify-center`}>
             <Text style={tw`text-xs text-slate-400`}>Sem dados para os últimos {period} dias</Text>
@@ -117,7 +143,7 @@ export const GlucoseChartCard: React.FC<GlucoseChartCardProps> = ({
                 Math.max((bar.value / maxBarValue) * 100, 15),
                 100,
               );
-              const info = getGlucoseLevelInfo(bar.value);
+              const info = getGlucoseLevelInfo(bar.value, activeTarget);
 
               let barBg = tw`bg-emerald-500`;
               if (info.level === "atencao") barBg = tw`bg-amber-500`;

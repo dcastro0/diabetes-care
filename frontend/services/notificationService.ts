@@ -12,15 +12,6 @@ export interface Reminder {
 
 const REMINDERS_STORAGE_KEY = "@DiabetesCare:reminders";
 
-// Configurar comportamento de notificacao em primeiro plano
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
-
 export async function requestNotificationPermissions(): Promise<boolean> {
   try {
     if (Platform.OS === "web") return false;

@@ -1,4 +1,5 @@
-import { getGlucoseLevelInfo } from "@/utils/glucoseLevels";
+import { useGlucoseTarget } from "@/contexts/GlucoseTargetContext";
+import { getGlucoseLevelInfo, GlucoseTarget } from "@/utils/glucoseLevels";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Text, View } from "react-native";
@@ -7,13 +8,16 @@ import tw from "twrnc";
 interface GlucoseBadgeProps {
   value: number;
   size?: "sm" | "md" | "lg";
+  target?: GlucoseTarget;
 }
 
 export const GlucoseBadge: React.FC<GlucoseBadgeProps> = ({
   value,
   size = "md",
+  target,
 }) => {
-  const levelInfo = getGlucoseLevelInfo(value);
+  const { activeTarget } = useGlucoseTarget();
+  const levelInfo = getGlucoseLevelInfo(value, target ?? activeTarget);
 
   const sizeClasses = {
     sm: "px-2 py-0.5 text-xs",
@@ -42,7 +46,7 @@ export const GlucoseBadge: React.FC<GlucoseBadgeProps> = ({
         color={(tw.color(levelInfo.colorClass.replace("text-", "")) as string) || "#475569"}
       />
       <Text style={[tw`font-semibold`, tw`${levelInfo.colorClass}`]}>
-        {levelInfo.text}
+        {levelInfo.label}
       </Text>
     </View>
   );

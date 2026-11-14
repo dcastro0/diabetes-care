@@ -1,11 +1,15 @@
-import { Achievement } from './achievementsServices';
-import { api, ApiError } from './api';
-import { Measurement } from '@/services/orm/entities/measurement';
+import { Achievement } from "./achievementsServices";
+import { api, ApiError } from "./api";
+import {
+  Measurement,
+  ServerGlucoseLog,
+} from "@/services/orm/entities/measurement";
 
 interface SyncResponse {
   message: string;
   total_measurements_on_server: number;
-  unlocked_achievements: Achievement[];
+  inserted_count: number;
+  unlocked_achievements?: Achievement[];
 }
 
 /**
@@ -19,10 +23,11 @@ export const syncMeasurements = async (
     const payload = measurements.map((m) => ({
       value: m.value,
       date: m.date,
-      note: m.note,
+      context: m.context || "geral",
+      note: m.note ?? null,
     }));
 
-    const response = await api.post<SyncResponse>('/measurements/sync', payload, {
+    const response = await api.post<SyncResponse>("/measurements/sync", payload, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -31,8 +36,30 @@ export const syncMeasurements = async (
     return response.data;
   } catch (error) {
     if (error instanceof ApiError) {
-      console.error('Erro ao sincronizar medições:', error.data || error.message);
+      console.error("Erro ao sincronizar medições:", error.data || error.message);
     }
-    throw new Error('Não foi possível sincronizar os dados.');
+    throw new Error("Não foi possível sincronizar os dados.");
   }
+};
+
+export const fetchMeasurementsFromServer = async (
+  token: string,
+): Promise<ServerGlucoseLog[]> => {
+  const response = await api.get<ServerGlucoseLog[]>("/glucose", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data || [];
+};
+
+export const deleteMeasurementOnServer = async (
+  token: string,
+  serverId: string,
+): Promise<void> => {
+  await api.delete(`/glucose/${serverId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 };

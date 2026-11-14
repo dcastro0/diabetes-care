@@ -1,10 +1,10 @@
+import { AccountRecommendationCard } from "@/components/ui/AccountRecommendationCard"
 import { useTheme } from "@/contexts/ThemeContext"
 import { useAuth } from "@/hooks/useAuth"
 import { Feather } from "@expo/vector-icons"
 import { router } from "expo-router"
 import React from "react"
 import {
-  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -19,17 +19,94 @@ export default function AccountScreen() {
   const { isDark } = useTheme()
 
   const menuOptions = [
-    { id: 1, label: "Editar Perfil", icon: "user", screen: "/edit_profile" },
-    { id: 2, label: "Dicas & Educação em Saúde", icon: "book-open", screen: "/dicas" },
-    { id: 3, label: "Lembretes e Alertas", icon: "clock", screen: "/lembretes" },
-    { id: 4, label: "Configurações do Sistema", icon: "settings", screen: "/config" },
-    { id: 5, label: "Central de Ajuda e Suporte", icon: "help-circle", screen: "/help" },
+    ...(authData ? [{ id: 1, label: "Editar Perfil", icon: "user", screen: "/edit_profile" }] : []),
+    { id: 2, label: "Refeições & Insulina", icon: "coffee", screen: "/refeicoes" },
+    { id: 3, label: "Dicas & Educação em Saúde", icon: "book-open", screen: "/dicas" },
+    { id: 4, label: "Lembretes e Alertas", icon: "clock", screen: "/lembretes" },
+    { id: 5, label: "Configurações do Sistema", icon: "settings", screen: "/config" },
+    { id: 6, label: "Central de Ajuda e Suporte", icon: "help-circle", screen: "/help" },
   ]
 
   if (!authData) {
     return (
-      <SafeAreaView style={[tw`flex-1 justify-center items-center`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
-        <ActivityIndicator size="large" color={(tw.color("blue-600") as string)} />
+      <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]}>
+        <ScrollView contentContainerStyle={tw`p-6 pb-24`}>
+          <View style={tw`mb-6 mt-2 items-center`}>
+            <Text style={[tw`text-xs font-bold uppercase tracking-widest`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+              Prontuário & Configurações
+            </Text>
+            <Text style={[tw`text-2xl font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
+              Perfil do Paciente
+            </Text>
+          </View>
+
+          <View style={tw`bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl mb-6`}>
+            <View style={tw`flex-row justify-between items-center border-b border-slate-800 pb-4 mb-4`}>
+              <View style={tw`flex-row items-center gap-2`}>
+                <Image
+                  source={require("../../assets/images/glico_mascot.png")}
+                  style={tw`w-7 h-7 rounded-full border border-blue-400/40`}
+                />
+                <View>
+                  <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider`}>
+                    Diabetes Care Medical ID
+                  </Text>
+                  <Text style={tw`text-xs text-amber-400 font-semibold`}>Modo Offline (Local)</Text>
+                </View>
+              </View>
+              <View style={tw`bg-slate-800 px-3 py-1 rounded-full border border-slate-700`}>
+                <Text style={tw`text-xs font-bold text-slate-300`}>Visitante</Text>
+              </View>
+            </View>
+
+            <View style={tw`flex-row items-center`}>
+              <View style={tw`w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 items-center justify-center`}>
+                <Feather name="user" size={28} color="#94A3B8" />
+              </View>
+              <View style={tw`ml-4 flex-1`}>
+                <Text style={tw`text-lg font-bold text-white`}>Paciente (Sem Conta)</Text>
+                <Text style={tw`text-xs text-slate-400 font-medium`}>
+                  Dados salvos apenas neste aparelho
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <AccountRecommendationCard />
+
+          <View
+            style={[
+              tw`rounded-3xl border shadow-sm overflow-hidden mb-6`,
+              isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+            ]}
+          >
+            {menuOptions.map((option, index) => (
+              <Pressable
+                key={option.id}
+                onPress={() => router.push(option.screen as any)}
+                style={({ pressed }) => [
+                  tw`flex-row items-center justify-between p-4.5`,
+                  pressed && (isDark ? tw`bg-slate-800` : tw`bg-slate-50`),
+                  index < menuOptions.length - 1 && (isDark ? tw`border-b border-slate-800` : tw`border-b border-slate-100`),
+                ]}
+              >
+                <View style={tw`flex-row items-center gap-3.5`}>
+                  <View style={isDark ? tw`bg-slate-800 p-2.5 rounded-xl` : tw`bg-slate-100 p-2.5 rounded-xl`}>
+                    <Feather
+                      name={option.icon as any}
+                      size={18}
+                      color={isDark ? (tw.color("slate-200") as string) : (tw.color("slate-700") as string)}
+                    />
+                  </View>
+                  <Text style={[tw`text-sm font-bold`, isDark ? tw`text-white` : tw`text-slate-700`]}>
+                    {option.label}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={(tw.color("slate-400") as string)} />
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       </SafeAreaView>
     )
   }

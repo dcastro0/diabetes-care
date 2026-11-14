@@ -11,9 +11,10 @@ export async function createTable(table: TableDefinition) {
   }
 }
 
-export async function insert(table: string, data: Record<string, any>) {
+export async function insert(table: string, data: Record<string, any>): Promise<number> {
   const { sql, params } = buildInsertSQL(table, data);
-  await run(sql, params);
+  const res = await run(sql, params);
+  return res?.lastInsertRowId ?? 0;
 }
 
 export async function update(table: string, data: Record<string, any>, where: string, whereParams: any[] = []) {

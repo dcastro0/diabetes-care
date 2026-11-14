@@ -1,16 +1,87 @@
+import { useGlucoseTarget } from "@/contexts/GlucoseTargetContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { cancelAllReminders } from "@/services/notificationService";
+import { UNIVERSAL_GLUCOSE_TARGET } from "@/utils/glucoseLevels";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
 
 export default function ConfiguracoesScreen() {
   const { theme, themeMode, setThemeMode } = useTheme();
+  const queryClient = useQueryClient();
+  const {
+    customTarget,
+    hasCustomTarget,
+    saveCustomTarget,
+    resetToStandardTarget,
+  } = useGlucoseTarget();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.multiGet([
+      "@DiabetesCare:notificationsEnabled",
+      "@DiabetesCare:autoSyncEnabled",
+    ])
+      .then((pairs) => {
+        const notif = pairs[0]?.[1];
+        const sync = pairs[1]?.[1];
+        if (notif !== null) setNotificationsEnabled(notif === "true");
+        if (sync !== null) setAutoSyncEnabled(sync === "true");
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleToggleNotifications = async (val: boolean) => {
+    setNotificationsEnabled(val);
+    await AsyncStorage.setItem("@DiabetesCare:notificationsEnabled", String(val));
+    if (!val) {
+      await cancelAllReminders();
+    }
+  };
+
+  const handleToggleAutoSync = async (val: boolean) => {
+    setAutoSyncEnabled(val);
+    await AsyncStorage.setItem("@DiabetesCare:autoSyncEnabled", String(val));
+  };
+  const [targetMinInput, setTargetMinInput] = useState(
+    String(customTarget?.min ?? UNIVERSAL_GLUCOSE_TARGET.min),
+  );
+  const [targetMaxInput, setTargetMaxInput] = useState(
+    String(customTarget?.max ?? UNIVERSAL_GLUCOSE_TARGET.max),
+  );
+
+  useEffect(() => {
+    setTargetMinInput(String(customTarget?.min ?? UNIVERSAL_GLUCOSE_TARGET.min));
+    setTargetMaxInput(String(customTarget?.max ?? UNIVERSAL_GLUCOSE_TARGET.max));
+  }, [customTarget]);
+
+  const handleSaveTarget = async () => {
+    const min = parseInt(targetMinInput, 10);
+    const max = parseInt(targetMaxInput, 10);
+    if (isNaN(min) || isNaN(max) || min < 40 || max > 400 || min >= max) {
+      Alert.alert(
+        "Faixa inválida",
+        "Informe valores válidos (mínimo >= 40, máximo <= 400 e mínimo menor que máximo).",
+      );
+      return;
+    }
+    await saveCustomTarget(min, max);
+    Alert.alert("Meta Atualizada", `Meta personalizada salva: ${min}–${max} mg/dL.`);
+  };
+
+  const handleResetTarget = async () => {
+    await resetToStandardTarget();
+    Alert.alert(
+      "Padrão Restaurado",
+      `Faixa alvo restaurada para o Padrão Universal (${UNIVERSAL_GLUCOSE_TARGET.min}–${UNIVERSAL_GLUCOSE_TARGET.max} mg/dL).`,
+    );
+  };
 
   const isDark = theme === "dark";
 
@@ -26,12 +97,16 @@ export default function ConfiguracoesScreen() {
   const handleClearCache = () => {
     Alert.alert(
       "Limpar Cache Local",
-      "Deseja limpar os arquivos temporários e logs da aplicação?",
+      "Deseja limpar os dados temporários em cache? Suas medições salvas não serão apagadas.",
       [
         { text: "Cancelar", style: "cancel" },
         {
           text: "Limpar Cache",
-          onPress: () => Alert.alert("Cache Limpo", "Cache local liberado com sucesso."),
+          onPress: async () => {
+            queryClient.clear();
+            await AsyncStorage.removeItem("@LastHeartbeat");
+            Alert.alert("Cache Limpo", "Cache local liberado com sucesso.");
+          },
         },
       ],
     );
@@ -156,6 +231,89 @@ export default function ConfiguracoesScreen() {
           </Pressable>
         </View>
 
+        {/* Seção Meta Glicêmica Individual */}
+        <Text style={[tw`text-xs font-bold uppercase tracking-widest mb-3 ml-1`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+          Meta Glicêmica Individual
+        </Text>
+
+        <View
+          style={[
+            tw`rounded-3xl p-5 border shadow-sm mb-6`,
+            isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+          ]}
+        >
+          <View style={tw`flex-row items-center justify-between mb-3`}>
+            <View style={tw`flex-row items-center gap-2.5`}>
+              <View style={tw`bg-purple-500/20 p-2 rounded-xl`}>
+                <Feather name="target" size={18} color={(tw.color("purple-500") as string)} />
+              </View>
+              <View>
+                <Text style={[tw`text-sm font-bold`, isDark ? tw`text-white` : tw`text-slate-800`]}>
+                  Faixa Alvo (mg/dL)
+                </Text>
+                <Text style={[tw`text-xs`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
+                  {hasCustomTarget
+                    ? "Meta personalizada ativa"
+                    : `Usando Padrão Universal (${UNIVERSAL_GLUCOSE_TARGET.min}–${UNIVERSAL_GLUCOSE_TARGET.max})`}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={tw`flex-row gap-3 mb-3`}>
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-[11px] font-bold text-slate-400 uppercase mb-1`}>Mínimo</Text>
+              <TextInput
+                keyboardType="numeric"
+                value={targetMinInput}
+                onChangeText={setTargetMinInput}
+                style={[
+                  tw`px-3.5 py-2.5 rounded-2xl border text-sm font-bold`,
+                  isDark ? tw`bg-slate-800 border-slate-700 text-white` : tw`bg-slate-50 border-slate-200 text-slate-800`,
+                ]}
+              />
+            </View>
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-[11px] font-bold text-slate-400 uppercase mb-1`}>Máximo</Text>
+              <TextInput
+                keyboardType="numeric"
+                value={targetMaxInput}
+                onChangeText={setTargetMaxInput}
+                style={[
+                  tw`px-3.5 py-2.5 rounded-2xl border text-sm font-bold`,
+                  isDark ? tw`bg-slate-800 border-slate-700 text-white` : tw`bg-slate-50 border-slate-200 text-slate-800`,
+                ]}
+              />
+            </View>
+          </View>
+
+          <View style={tw`flex-row gap-2`}>
+            <Pressable
+              onPress={handleSaveTarget}
+              style={({ pressed }) => [
+                tw`flex-1 bg-blue-600 py-2.5 rounded-2xl items-center justify-center`,
+                pressed && tw`bg-blue-700`,
+              ]}
+            >
+              <Text style={tw`text-white font-bold text-xs`}>Salvar Meta</Text>
+            </Pressable>
+            {hasCustomTarget && (
+              <Pressable
+                onPress={handleResetTarget}
+                style={({ pressed }) => [
+                  tw`px-4 py-2.5 rounded-2xl border items-center justify-center`,
+                  isDark ? tw`bg-slate-800 border-slate-700` : tw`bg-slate-100 border-slate-200`,
+                  pressed && tw`opacity-80`,
+                ]}
+              >
+                <Text style={[tw`font-bold text-xs`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>
+                  Usar Padrão
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+
         {/* Seção Preferências Médicas */}
         <Text style={[tw`text-xs font-bold uppercase tracking-widest mb-3 ml-1`, isDark ? tw`text-slate-400` : tw`text-slate-500`]}>
           Preferências Médicas & Notificações
@@ -183,7 +341,7 @@ export default function ConfiguracoesScreen() {
             </View>
             <Switch
               value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              onValueChange={handleToggleNotifications}
               trackColor={{ false: tw.color("slate-300"), true: tw.color("blue-600") }}
             />
           </View>
@@ -204,7 +362,7 @@ export default function ConfiguracoesScreen() {
             </View>
             <Switch
               value={autoSyncEnabled}
-              onValueChange={setAutoSyncEnabled}
+              onValueChange={handleToggleAutoSync}
               trackColor={{ false: tw.color("slate-300"), true: tw.color("blue-600") }}
             />
           </View>

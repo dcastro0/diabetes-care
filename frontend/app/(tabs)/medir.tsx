@@ -1,12 +1,14 @@
 import { GlucoseBadge } from "@/components/ui/GlucoseBadge"
+import { TargetModeBanner } from "@/components/ui/TargetModeBanner"
+import { useGlucoseTarget } from "@/contexts/GlucoseTargetContext"
 import { useTheme } from "@/contexts/ThemeContext"
 import { useAuth } from "@/hooks/useAuth"
 import { syncMeasurements } from "@/services/measurementService"
 import {
-  addMeasurement,
   getUnsyncedMeasurements,
   initMeasurementTable,
   markMeasurementsAsSynced,
+  saveMeasurement,
 } from "@/services/orm/entities/measurement"
 import { getGlucoseLevelInfo } from "@/utils/glucoseLevels"
 import { Feather } from "@expo/vector-icons"
@@ -27,6 +29,7 @@ import tw from "twrnc"
 export default function MedirScreen() {
   const { authData } = useAuth()
   const { isDark } = useTheme()
+  const { activeTarget } = useGlucoseTarget()
   const [value, setValue] = useState(110)
   const [note, setNote] = useState("")
   const [tag, setTag] = useState("Jejum")
@@ -43,16 +46,19 @@ export default function MedirScreen() {
     setIsSaving(true)
     try {
       await initMeasurementTable()
-      const noteWithTag = tag ? `[${tag}] ${note}`.trim() : note
+      const cleanNote = note.trim() || null
 
-      const newId = await addMeasurement(value, noteWithTag)
+      await saveMeasurement(value, new Date().toISOString(), cleanNote, tag || "geral")
 
       if (authData?.token) {
         try {
           const unsynced = await getUnsyncedMeasurements()
           if (unsynced.length > 0) {
             await syncMeasurements(authData.token, unsynced)
-            await markMeasurementsAsSynced([newId])
+            const syncedIds = unsynced
+              .map((m) => m.id)
+              .filter((id): id is number => typeof id === "number")
+            await markMeasurementsAsSynced(syncedIds)
           }
         } catch (syncErr) {
           console.warn("Falha na sincronização online:", syncErr)
@@ -67,7 +73,7 @@ export default function MedirScreen() {
     }
   }
 
-  const levelInfo = getGlucoseLevelInfo(value)
+  const levelInfo = getGlucoseLevelInfo(value, activeTarget)
 
   return (
     <SafeAreaView style={[tw`flex-1`, isDark ? tw`bg-slate-950` : tw`bg-slate-50`]} edges={["top", "left", "right"]}>
@@ -81,6 +87,8 @@ export default function MedirScreen() {
             Medir Glicemia
           </Text>
         </View>
+
+        <TargetModeBanner compact allowCustomizeLink={false} />
 
         {/* Mostrador Circular do Dial Biológico */}
         <View style={tw`items-center my-4`}>

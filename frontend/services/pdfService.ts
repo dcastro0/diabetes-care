@@ -1,10 +1,27 @@
 import { Measurement } from "@/services/orm/entities/measurement";
-import { getGlucoseLevelInfo } from "@/utils/glucoseLevels";
+import {
+  getGlucoseLevelInfo,
+  GlucoseTarget,
+  UNIVERSAL_GLUCOSE_TARGET,
+} from "@/utils/glucoseLevels";
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Alert } from "react-native";
 
-export function generateHistoryHtml(measurements: Measurement[]): string {
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function generateHistoryHtml(
+  measurements: Measurement[],
+  target: GlucoseTarget = UNIVERSAL_GLUCOSE_TARGET,
+  isCustomTarget = false,
+): string {
   const sorted = [...measurements].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -16,14 +33,14 @@ export function generateHistoryHtml(measurements: Measurement[]): string {
   const min = values.length > 0 ? Math.min(...values) : 0;
 
   const inRangeCount = sorted.filter((m) => {
-    const info = getGlucoseLevelInfo(m.value);
+    const info = getGlucoseLevelInfo(m.value, target);
     return info.level === "bom";
   }).length;
   const inRangePercent = total > 0 ? Math.round((inRangeCount / total) * 100) : 0;
 
   const tableRowsHtml = sorted
     .map((m, index) => {
-      const levelInfo = getGlucoseLevelInfo(m.value);
+      const levelInfo = getGlucoseLevelInfo(m.value, target);
 
       let badgeBg = "#DCFCE7";
       let badgeText = "#15803D";
@@ -70,7 +87,7 @@ export function generateHistoryHtml(measurements: Measurement[]): string {
             </span>
           </td>
           <td style="padding: 10px 12px; color: #475569; font-size: 12px; border-bottom: 1px solid #E2E8F0;">
-            ${m.note || "<span style='color:#CBD5E1;'>—</span>"}
+            ${m.note ? escapeHtml(m.note) : "<span style='color:#CBD5E1;'>—</span>"}
           </td>
         </tr>
       `;
@@ -202,6 +219,7 @@ export function generateHistoryHtml(measurements: Measurement[]): string {
           <div class="meta-info">
             <div><strong>Emissão:</strong> ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}</div>
             <div><strong>Total de Registros:</strong> ${total}</div>
+            <div><strong>Faixa Alvo:</strong> ${isCustomTarget ? "Meta Personalizada" : "Padrão Universal"} (${target.min}–${target.max} mg/dL)</div>
           </div>
         </div>
 
@@ -255,13 +273,17 @@ export function generateHistoryHtml(measurements: Measurement[]): string {
 /**
  * Abre a janela nativa de visualização/impressão do PDF.
  */
-export async function previewHistoryPdf(measurements: Measurement[]) {
+export async function previewHistoryPdf(
+  measurements: Measurement[],
+  target: GlucoseTarget = UNIVERSAL_GLUCOSE_TARGET,
+  isCustomTarget = false,
+) {
   if (measurements.length === 0) {
     Alert.alert("Sem dados", "Não há medições cadastradas para visualizar o relatório.");
     return;
   }
 
-  const htmlContent = generateHistoryHtml(measurements);
+  const htmlContent = generateHistoryHtml(measurements, target, isCustomTarget);
 
   try {
     await Print.printAsync({
@@ -276,13 +298,17 @@ export async function previewHistoryPdf(measurements: Measurement[]) {
 /**
  * Gera o PDF e abre a caixa de diálogo de compartilhamento direto.
  */
-export async function exportHistoryPdf(measurements: Measurement[]) {
+export async function exportHistoryPdf(
+  measurements: Measurement[],
+  target: GlucoseTarget = UNIVERSAL_GLUCOSE_TARGET,
+  isCustomTarget = false,
+) {
   if (measurements.length === 0) {
     Alert.alert("Sem dados", "Não há medições registradas para exportar o relatório.");
     return;
   }
 
-  const htmlContent = generateHistoryHtml(measurements);
+  const htmlContent = generateHistoryHtml(measurements, target, isCustomTarget);
 
   try {
     const { uri } = await Print.printToFileAsync({

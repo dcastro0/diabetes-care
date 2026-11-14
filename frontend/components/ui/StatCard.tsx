@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import React from "react";
 import { Text, View } from "react-native";
 import tw from "twrnc";
@@ -17,8 +18,17 @@ export const StatCard: React.FC<StatCardProps> = ({
   subtitle,
   highlightColor = "text-blue-600",
 }) => {
+  const { isDark } = useTheme();
+
   return (
-    <View style={tw`bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm flex-1`}>
+    <View
+      style={[
+        tw`p-4 rounded-3xl border shadow-sm flex-1`,
+        isDark
+          ? tw`bg-slate-800/80 border-slate-700`
+          : tw`bg-white border-slate-200/80`,
+      ]}
+    >
       <Text style={tw`text-xs font-bold text-slate-400 uppercase tracking-wider mb-1`}>
         {label}
       </Text>

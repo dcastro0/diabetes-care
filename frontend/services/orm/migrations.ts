@@ -1,6 +1,14 @@
 import { exec, getDb, run } from "./database";
 import { buildCreateIndicesSQL, buildCreateTableSQL } from "./helpers";
-import { measurementTable } from "./schema";
+import { mealTable, measurementTable } from "./schema";
+
+async function addColumnIfMissing(table: string, columnDef: string) {
+  try {
+    await run(`ALTER TABLE ${table} ADD COLUMN ${columnDef};`);
+  } catch {
+    // Column already exists on fresh table creation
+  }
+}
 
 const migrations = [
   {
@@ -10,8 +18,23 @@ const migrations = [
       await run(sql);
       const indices = buildCreateIndicesSQL(measurementTable);
       for (const i of indices) await exec(i);
-    }
-  }
+    },
+  },
+  {
+    version: 2,
+    up: async () => {
+      await addColumnIfMissing(
+        "measurements",
+        "context TEXT DEFAULT 'geral'",
+      );
+      await addColumnIfMissing("measurements", "server_id TEXT DEFAULT NULL");
+
+      const mealSql = buildCreateTableSQL(mealTable);
+      await run(mealSql);
+      const mealIndices = buildCreateIndicesSQL(mealTable);
+      for (const i of mealIndices) await exec(i);
+    },
+  },
 ];
 
 export async function migrateDb() {

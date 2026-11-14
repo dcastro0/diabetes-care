@@ -1,4 +1,5 @@
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -15,22 +16,46 @@ import tw from "twrnc";
 
 export default function OnboardingScreen() {
   const { isDark } = useTheme();
+  const { authData, enterGuestMode } = useAuth();
   const [step, setStep] = useState(1);
   const [diabetesType, setDiabetesType] = useState<string>("Tipo 2");
 
   const types = ["Tipo 1", "Tipo 2", "Gestacional", "Pré-diabetes", "Acompanhamento Preventivo"];
 
+  const saveOnboardingPrefs = async () => {
+    try {
+      await AsyncStorage.setItem("@DiabetesCare:hasSeenOnboarding", "true");
+      await AsyncStorage.setItem("@DiabetesCare:diabetesType", diabetesType);
+    } catch (err) {
+      console.warn("Erro ao salvar dados de onboarding:", err);
+    }
+  };
+
   const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      try {
-        await AsyncStorage.setItem("@DiabetesCare:hasSeenOnboarding", "true");
-        await AsyncStorage.setItem("@DiabetesCare:diabetesType", diabetesType);
-      } catch (err) {
-        console.warn("Erro ao salvar dados de onboarding:", err);
+      await saveOnboardingPrefs();
+      if (authData) {
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/register");
       }
+    }
+  };
+
+  const handleContinueWithoutLogin = async () => {
+    await saveOnboardingPrefs();
+    await enterGuestMode();
+    router.replace("/(tabs)");
+  };
+
+  const handleSkipIntro = async () => {
+    await saveOnboardingPrefs();
+    if (authData) {
       router.replace("/(tabs)");
+    } else {
+      router.replace("/login");
     }
   };
 
@@ -130,7 +155,7 @@ export default function OnboardingScreen() {
               Registre quando puder, veja estimativas de HbA1c e compartilhe relatórios completos com seu médico.
             </Text>
             <View style={tw`bg-emerald-50 border border-emerald-200 rounded-2xl p-4 w-full flex-row items-center gap-3`}>
-              <Feather name="shield-check" size={24} color={(tw.color("emerald-600") as string)} />
+              <Feather name="shield" size={24} color={(tw.color("emerald-600") as string)} />
               <Text style={tw`text-xs font-semibold text-emerald-800 flex-1 leading-5`}>
                 Seus dados pertencem a você: salvos localmente e seguros na nuvem.
               </Text>
@@ -149,14 +174,33 @@ export default function OnboardingScreen() {
           ]}
         >
           <Text style={tw`text-white font-bold text-base`}>
-            {step === 3 ? "Entrar no Aplicativo" : "Continuar"}
+            {step === 3
+              ? authData
+                ? "Voltar ao Aplicativo"
+                : "Criar Conta Gratuita"
+              : "Continuar"}
           </Text>
           <Feather name="arrow-right" size={20} color="white" />
         </Pressable>
 
+        {step === 3 && !authData && (
+          <Pressable
+            onPress={handleContinueWithoutLogin}
+            style={({ pressed }) => [
+              tw`py-3.5 rounded-2xl border items-center justify-center mt-2.5`,
+              isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200`,
+              pressed && tw`opacity-80`,
+            ]}
+          >
+            <Text style={[tw`text-sm font-bold`, isDark ? tw`text-slate-300` : tw`text-slate-600`]}>
+              Continuar sem conta (Modo Offline)
+            </Text>
+          </Pressable>
+        )}
+
         {step < 3 && (
           <Pressable
-            onPress={() => router.replace("/(tabs)")}
+            onPress={handleSkipIntro}
             style={tw`py-3 items-center mt-1`}
           >
             <Text style={tw`text-xs font-bold text-slate-400`}>Pular Introdução</Text>

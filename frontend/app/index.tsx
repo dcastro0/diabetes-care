@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  const { authData, loading } = useAuth();
+  const { authData, isGuest, loading } = useAuth();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
@@ -35,7 +35,7 @@ export default function Index() {
     return <Redirect href="/onboarding" />;
   }
 
-  if (authData) {
+  if (authData || isGuest) {
     return <Redirect href="/(tabs)" />;
   } else {
     return <Redirect href="/login" />;

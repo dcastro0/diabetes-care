@@ -1,3 +1,4 @@
+import { AccountRecommendationCard } from "@/components/ui/AccountRecommendationCard";
 import { GlicoBubbleCard } from "@/components/ui/GlicoBubbleCard";
 import { GlucoseBadge } from "@/components/ui/GlucoseBadge";
 import { GlucoseChartCard } from "@/components/ui/GlucoseChartCard";
@@ -5,13 +6,17 @@ import { HeroGlucoseRing } from "@/components/ui/HeroGlucoseRing";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { sendHeartbeat } from "@/services/heartbeat";
-import { syncMeasurements } from "@/services/measurementService";
+import {
+  fetchMeasurementsFromServer,
+  syncMeasurements,
+} from "@/services/measurementService";
 import {
   getMeasurements,
   getUnsyncedMeasurements,
   initMeasurementTable,
   markMeasurementsAsSynced,
   Measurement,
+  upsertMeasurementsFromServer,
 } from "@/services/orm/entities/measurement";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -70,6 +75,8 @@ export default function HomeScreen() {
         const idsToUpdate = unsyncedMeasurements.map((m) => m.id!);
         await markMeasurementsAsSynced(idsToUpdate);
       }
+      const serverLogs = await fetchMeasurementsFromServer(authData.token);
+      await upsertMeasurementsFromServer(serverLogs);
     } catch (error) {
       console.error("(Home) Falha na sincronização:", error);
     }
@@ -170,6 +177,18 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable
+            onPress={() => router.push("/refeicoes" as any)}
+            style={({ pressed }) => [
+              tw`flex-row items-center gap-2 px-4 py-2.5 rounded-full border shadow-sm`,
+              isDark ? tw`bg-slate-900 border-slate-800` : tw`bg-white border-slate-200/80`,
+              pressed && (isDark ? tw`bg-slate-800` : tw`bg-slate-100`),
+            ]}
+          >
+            <Feather name="coffee" size={16} color={(tw.color("blue-600") as string)} />
+            <Text style={[tw`text-xs font-bold`, isDark ? tw`text-white` : tw`text-slate-700`]}>Refeições & Insulina</Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push("/historico")}
             style={({ pressed }) => [
               tw`flex-row items-center gap-2 px-4 py-2.5 rounded-full border shadow-sm`,
@@ -208,6 +227,9 @@ export default function HomeScreen() {
 
         {/* BALÃO FLUTUANTE DO MASCOTE GLICO (Speech Bubble) */}
         <GlicoBubbleCard message={dynamicGlicoMessage} />
+
+        {/* RECOMENDAÇÃO DE CRIAÇÃO DE CONTA (MODO OFFLINE) */}
+        {!authData && <AccountRecommendationCard compact />}
 
         {/* GRÁFICO E TENDÊNCIAS CLÍNICAS (eA1c / TIR) */}
         <View style={tw`my-2`}>
