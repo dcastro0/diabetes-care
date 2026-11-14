@@ -6,9 +6,9 @@ services:
     container_name: diabetes_care_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: diabetes_care
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${DB_NAME:-diabetes_care}
     ports:
       - "5432:5432"
     volumes:
@@ -32,10 +32,10 @@ services:
       ENV: "production"
       DB_HOST: "postgres"
       DB_PORT: "5432"
-      DB_USER: "postgres"
-      DB_PASSWORD: "postgrespassword"
-      DB_NAME: "diabetes_care"
-      JWT_SECRET: "super-secret-jwt-key-change-in-production"
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgrespassword}
+      DB_NAME: ${DB_NAME:-diabetes_care}
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
     depends_on:
       postgres:
         condition: service_healthy

@@ -92,10 +92,10 @@ lint-backend:
 	@echo "🔍 Analisando código Go (go vet)..."
 	@cd backend && go vet ./...
 
-## lint-frontend: Roda linter no frontend
+## lint-frontend: Roda linter e typecheck no frontend
 lint-frontend:
-	@echo "🔍 Executando linter no Frontend Expo..."
-	@cd frontend && pnpm lint
+	@echo "🔍 Executando linter e typecheck no Frontend Expo..."
+	@cd frontend && pnpm lint && npx tsc --noEmit
 
 ## lint: Roda linter completo (Backend + Frontend)
 lint: lint-backend lint-frontend
