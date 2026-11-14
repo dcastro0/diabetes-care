@@ -14,18 +14,24 @@ type contextKey string
 
 const UserIDKey contextKey = "userID"
 
+func writeAuthError(w http.ResponseWriter, message string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusUnauthorized)
+	_, _ = w.Write([]byte(`{"error":"` + message + `"}`))
+}
+
 func Auth(jwtSecret string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, `{"error":"cabeçalho de autorização não fornecido"}`, http.StatusUnauthorized)
+				writeAuthError(w, "cabeçalho de autorização não fornecido")
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, `{"error":"formato de token inválido"}`, http.StatusUnauthorized)
+				writeAuthError(w, "formato de token inválido")
 				return
 			}
 
@@ -38,25 +44,25 @@ func Auth(jwtSecret string) func(next http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				http.Error(w, `{"error":"token inválido ou expirado"}`, http.StatusUnauthorized)
+				writeAuthError(w, "token inválido ou expirado")
 				return
 			}
 
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
-				http.Error(w, `{"error":"claims do token inválidas"}`, http.StatusUnauthorized)
+				writeAuthError(w, "claims do token inválidas")
 				return
 			}
 
 			userIDStr, ok := claims["user_id"].(string)
 			if !ok {
-				http.Error(w, `{"error":"id do usuário não encontrado no token"}`, http.StatusUnauthorized)
+				writeAuthError(w, "id do usuário não encontrado no token")
 				return
 			}
 
 			userID, err := uuid.Parse(userIDStr)
 			if err != nil {
-				http.Error(w, `{"error":"id do usuário inválido"}`, http.StatusUnauthorized)
+				writeAuthError(w, "id do usuário inválido")
 				return
 			}
 

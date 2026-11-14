@@ -41,3 +41,11 @@ type AuthResponse struct {
 	DiabetesType string `json:"diabetes_type"`
 	User         User   `json:"user"`
 }
+
+type UpdateProfileRequest struct {
+	Name             string `json:"name"`
+	Email            string `json:"email"`
+	DiabetesType     string `json:"diabetes_type"`
+	TargetGlucoseMin int    `json:"target_glucose_min"`
+	TargetGlucoseMax int    `json:"target_glucose_max"`
+}

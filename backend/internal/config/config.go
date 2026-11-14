@@ -35,6 +35,10 @@ func LoadConfig() (*Config, error) {
 		JWTSecret:  getEnv("JWT_SECRET", "default-dev-secret-change-me"),
 	}
 
+	if cfg.Env == "production" && (cfg.JWTSecret == "" || cfg.JWTSecret == "default-dev-secret-change-me") {
+		return nil, fmt.Errorf("JWT_SECRET deve ser configurado com um valor seguro em ambiente de produção")
+	}
+
 	return cfg, nil
 }
 

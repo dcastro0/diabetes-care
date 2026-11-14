@@ -13,21 +13,23 @@ import (
 )
 
 type AuthHandler struct {
-	userRepo  *repository.UserRepository
-	jwtSecret string
+	userRepo     *repository.UserRepository
+	jwtSecret    string
+	allowDevMock bool
 }
 
-func NewAuthHandler(userRepo *repository.UserRepository, jwtSecret string) *AuthHandler {
+func NewAuthHandler(userRepo *repository.UserRepository, jwtSecret string, allowDevMock bool) *AuthHandler {
 	return &AuthHandler{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
+		userRepo:     userRepo,
+		jwtSecret:    jwtSecret,
+		allowDevMock: allowDevMock,
 	}
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req model.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"payload JSON inválido"}`, http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "payload JSON inválido")
 		return
 	}
 
@@ -36,7 +38,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Email == "" || req.Password == "" || req.Name == "" {
-		http.Error(w, `{"error":"campos obrigatórios ausentes (name, email, password)"}`, http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "campos obrigatórios ausentes (name, email, password)")
 		return
 	}
 
@@ -45,17 +47,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if user already exists
-	if h.userRepo != nil {
+	if !h.allowDevMock && h.userRepo != nil {
 		existing, err := h.userRepo.GetByEmail(r.Context(), req.Email)
 		if err == nil && existing != nil {
-			http.Error(w, `{"error":"este e-mail já está cadastrado"}`, http.StatusConflict)
+			writeError(w, http.StatusConflict, "este e-mail já está cadastrado")
 			return
 		}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		http.Error(w, `{"error":"erro ao criptografar senha"}`, http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "erro ao criptografar senha")
 		return
 	}
 
@@ -71,22 +73,20 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:        time.Now(),
 	}
 
-	if h.userRepo != nil {
+	if !h.allowDevMock && h.userRepo != nil {
 		if err := h.userRepo.Create(r.Context(), &user); err != nil {
-			http.Error(w, `{"error":"erro ao salvar usuário no banco de dados"}`, http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, "erro ao salvar usuário no banco de dados")
 			return
 		}
 	}
 
 	token, err := h.generateToken(user.ID)
 	if err != nil {
-		http.Error(w, `{"error":"erro ao gerar token JWT"}`, http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "erro ao gerar token JWT")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(model.AuthResponse{
+	writeJSON(w, http.StatusCreated, model.AuthResponse{
 		Token:        token,
 		ID:           user.ID.String(),
 		Name:         user.Name,
@@ -100,25 +100,25 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"payload JSON inválido"}`, http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "payload JSON inválido")
 		return
 	}
 
 	if req.Email == "" || req.Password == "" {
-		http.Error(w, `{"error":"email e senha são obrigatórios"}`, http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "email e senha são obrigatórios")
 		return
 	}
 
 	var user *model.User
-	if h.userRepo != nil {
+	if !h.allowDevMock && h.userRepo != nil {
 		dbUser, err := h.userRepo.GetByEmail(r.Context(), req.Email)
 		if err != nil || dbUser == nil {
-			http.Error(w, `{"error":"e-mail ou senha inválidos"}`, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, "e-mail ou senha inválidos")
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.PasswordHash), []byte(req.Password)); err != nil {
-			http.Error(w, `{"error":"e-mail ou senha inválidos"}`, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, "e-mail ou senha inválidos")
 			return
 		}
 		user = dbUser
@@ -139,13 +139,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.generateToken(user.ID)
 	if err != nil {
-		http.Error(w, `{"error":"erro ao gerar token JWT"}`, http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "erro ao gerar token JWT")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(model.AuthResponse{
+	writeJSON(w, http.StatusOK, model.AuthResponse{
 		Token:        token,
 		ID:           user.ID.String(),
 		Name:         user.Name,

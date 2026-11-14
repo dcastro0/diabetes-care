@@ -1,6 +1,7 @@
 # Stage 1: Build binary
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
+ENV GOTOOLCHAIN=auto
 WORKDIR /app
 
 # Install git and ca-certificates

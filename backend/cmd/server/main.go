@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/caio/diabetes-care/backend/internal/config"
+	"github.com/caio/diabetes-care/backend/internal/database"
 	"github.com/caio/diabetes-care/backend/internal/handler"
 	customMiddleware "github.com/caio/diabetes-care/backend/internal/middleware"
 	"github.com/caio/diabetes-care/backend/internal/repository"
@@ -45,24 +46,42 @@ func main() {
 
 	dbPool, err := repository.NewPostgresPool(ctx, cfg.DSN())
 	if err != nil {
-		logger.Warn("não foi possível conectar ao PostgreSQL (executando com mocks de desenvolvimento)",
-			slog.String("dsn", cfg.DSN()),
+		logger.Warn("não foi possível conectar ao PostgreSQL",
+			slog.String("host", cfg.DBHost),
+			slog.String("port", cfg.DBPort),
+			slog.String("db", cfg.DBName),
 			slog.String("error", err.Error()),
 		)
 	} else {
 		defer dbPool.Close()
 		logger.Info("conexão com PostgreSQL estabelecida com sucesso!")
+		if os.Getenv("AUTO_MIGRATE") != "false" {
+			migCtx, migCancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer migCancel()
+			if err := database.RunMigrations(migCtx, dbPool, logger); err != nil {
+				logger.Error("falha ao executar migrations SQL", slog.String("error", err.Error()))
+				os.Exit(1)
+			}
+		}
 	}
 
 	// 4. Initialize Repositories & Handlers
 	userRepo := repository.NewUserRepository(dbPool)
+	glucoseRepo := repository.NewGlucoseRepository(dbPool)
+	mealRepo := repository.NewMealRepository(dbPool)
+	streakRepo := repository.NewStreakRepository(dbPool)
+	achievementRepo := repository.NewAchievementRepository(dbPool)
+
+	allowDevMock := cfg.Env == "development" && dbPool == nil
 
 	healthH := handler.NewHealthHandler(dbPool)
-	authH := handler.NewAuthHandler(userRepo, cfg.JWTSecret)
-	glucoseH := handler.NewGlucoseHandler()
-	heartbeatH := handler.NewHeartbeatHandler()
-	measurementsH := handler.NewMeasurementsHandler()
-	achievementsH := handler.NewAchievementsHandler()
+	authH := handler.NewAuthHandler(userRepo, cfg.JWTSecret, allowDevMock)
+	usersH := handler.NewUsersHandler(userRepo)
+	glucoseH := handler.NewGlucoseHandler(glucoseRepo)
+	mealsH := handler.NewMealsHandler(mealRepo)
+	heartbeatH := handler.NewHeartbeatHandler(streakRepo, glucoseRepo, achievementRepo)
+	measurementsH := handler.NewMeasurementsHandler(glucoseRepo, achievementRepo)
+	achievementsH := handler.NewAchievementsHandler(achievementRepo)
 
 	// 5. Setup Router (Chi)
 	r := chi.NewRouter()
@@ -79,7 +98,7 @@ func main() {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 
@@ -100,6 +119,11 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(customMiddleware.Auth(cfg.JWTSecret))
 
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/me", usersH.GetMe)
+				r.Put("/me", usersH.UpdateMe)
+			})
+
 			r.Post("/heartbeat", heartbeatH.Heartbeat)
 			r.Get("/achievements", achievementsH.List)
 
@@ -109,6 +133,14 @@ func main() {
 			r.Route("/glucose", func(r chi.Router) {
 				r.Get("/", glucoseH.ListLogs)
 				r.Post("/", glucoseH.CreateLog)
+				r.Delete("/{id}", glucoseH.DeleteLog)
+			})
+
+			r.Route("/meals", func(r chi.Router) {
+				r.Get("/", mealsH.ListMeals)
+				r.Post("/", mealsH.CreateMeal)
+				r.Post("/sync", mealsH.SyncMeals)
+				r.Delete("/{id}", mealsH.DeleteMeal)
 			})
 		})
 	})

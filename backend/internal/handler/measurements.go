@@ -2,71 +2,85 @@ package handler
 
 import (
 	"encoding/json"
-	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/caio/diabetes-care/backend/internal/middleware"
 	"github.com/caio/diabetes-care/backend/internal/model"
+	"github.com/caio/diabetes-care/backend/internal/repository"
 )
 
-type SyncMeasurementItem struct {
-	Value float64 `json:"value"`
-	Date  string  `json:"date"`
-	Note  *string `json:"note"`
+type MeasurementsHandler struct {
+	glucoseRepo     *repository.GlucoseRepository
+	achievementRepo *repository.AchievementRepository
 }
 
-type SyncMeasurementsResponse struct {
-	Message                   string        `json:"message"`
-	TotalMeasurementsOnServer int           `json:"total_measurements_on_server"`
-	UnlockedAchievements      []interface{} `json:"unlocked_achievements"`
-}
-
-type MeasurementsHandler struct{}
-
-func NewMeasurementsHandler() *MeasurementsHandler {
-	return &MeasurementsHandler{}
+func NewMeasurementsHandler(
+	glucoseRepo *repository.GlucoseRepository,
+	achievementRepo *repository.AchievementRepository,
+) *MeasurementsHandler {
+	return &MeasurementsHandler{
+		glucoseRepo:     glucoseRepo,
+		achievementRepo: achievementRepo,
+	}
 }
 
 func (h *MeasurementsHandler) Sync(w http.ResponseWriter, r *http.Request) {
-	var items []SyncMeasurementItem
-	if err := json.NewDecoder(r.Body).Decode(&items); err != nil {
-		http.Error(w, `{"error":"payload JSON inválido"}`, http.StatusBadRequest)
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "usuário não autenticado")
 		return
 	}
 
-	resp := SyncMeasurementsResponse{
-		Message:                   "Medições sincronizadas com sucesso!",
-		TotalMeasurementsOnServer: len(items),
-		UnlockedAchievements:      []interface{}{},
+	var items []model.SyncMeasurementItem
+	if err := json.NewDecoder(r.Body).Decode(&items); err != nil {
+		writeError(w, http.StatusBadRequest, "payload JSON inválido")
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	inserted, err := h.glucoseRepo.BulkInsert(r.Context(), userID, items)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "erro ao sincronizar medições")
+		return
+	}
+
+	totalOnServer, _ := h.glucoseRepo.CountByUser(r.Context(), userID)
+
+	var unlocked []repository.AchievementWithProgress
+	if h.achievementRepo != nil {
+		unlocked, _ = h.achievementRepo.EvaluateAndUnlock(r.Context(), userID)
+	}
+
+	resp := model.SyncMeasurementsResponse{
+		Message:                   "Medições sincronizadas com sucesso!",
+		TotalMeasurementsOnServer: totalOnServer,
+		InsertedCount:             inserted,
+		UnlockedAchievements:      unlocked,
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *MeasurementsHandler) GetStats(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "usuário não autenticado")
+		return
+	}
+
 	daysStr := r.URL.Query().Get("days")
 	days := 7
 	if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
 		days = d
 	}
 
-	// Mock representation / calculated metrics for bootstrap
-	avgGlucose := 115.4
-	estimatedHbA1c := math.Round(((avgGlucose+46.7)/28.7)*10) / 10
+	useStandard := r.URL.Query().Get("use_standard_target") == "true"
 
-	resp := model.GlucoseStatsResponse{
-		TotalReadings:      14,
-		AverageGlucose:     avgGlucose,
-		EstimatedHbA1c:     estimatedHbA1c,
-		TimeInRangePercent: 85.7,
-		MinGlucose:         82,
-		MaxGlucose:         162,
-		DaysPeriod:         days,
+	stats, err := h.glucoseRepo.GetStatsByUser(r.Context(), userID, days, useStandard)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "erro ao calcular estatísticas")
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	writeJSON(w, http.StatusOK, stats)
 }

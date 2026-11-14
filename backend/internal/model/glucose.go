@@ -31,4 +31,7 @@ type GlucoseStatsResponse struct {
 	MinGlucose         int     `json:"min_glucose"`
 	MaxGlucose         int     `json:"max_glucose"`
 	DaysPeriod         int     `json:"days_period"`
+	TargetMin          int     `json:"target_min"`
+	TargetMax          int     `json:"target_max"`
+	IsCustomTarget     bool    `json:"is_custom_target"`
 }
